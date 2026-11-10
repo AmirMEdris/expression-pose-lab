@@ -34,6 +34,11 @@ class Settings:
     steps: int = 3
     threshold: float = .6
     colorful: bool = False
+    dream_engine: str = 'Expression'
+    dream_scope: str = 'Whole frame'
+    dream_depth: str = 'Shapes'
+    dream_resolution: int = 384
+    explain_target: str = 'Top prediction'
 
 
 class Engine:
@@ -65,11 +70,12 @@ class Engine:
         info=device_info()
         self.events.put(('device',f'{info["backend"]} · {info["device"]}'))
         from expression import ExpressionEstimator
-        from pose import PoseEstimator,draw_poses
         from pose_quality import assess_pose
         source=None;pose=None;expression=None;model_path=None;revision=-1;still=None;active='Stopped';last_visual=0.;last_frame=None;fps=0.;last_tick=time.monotonic();timestamp=0
+        cached_face_key=None;cached_faces=None
         try:
             while not self.stop.is_set():
+                cycle_start=time.monotonic()
                 s=self.snapshot()
                 if s.revision!=revision:
                     revision=s.revision
@@ -114,9 +120,14 @@ class Engine:
                     if frame is None or frame.size==0:raise RuntimeError('No frame available; choose another source or retry Camera')
                     if frame.shape[1]>960:frame=cv2.resize(frame,(960,round(frame.shape[0]*960/frame.shape[1])))
                     expression.threshold=s.threshold
-                    faces=expression.detect(frame,predict=s.predictions)
+                    face_key=(self.generation,s.predictions,s.threshold)
+                    if still is not None and face_key==cached_face_key:faces=cached_faces
+                    else:
+                        faces=expression.detect(frame,predict=s.predictions)
+                        cached_face_key=face_key if still is not None else None;cached_faces=faces
                     annotated=frame.copy();pose_count=0;withheld=0
                     if s.pose:
+                        from pose import PoseEstimator,draw_poses
                         if pose is None:pose=PoseEstimator(self.root/'models/pose_landmarker_lite.task',video=True,max_people=4)
                         timestamp=max(timestamp+1,int(time.monotonic()*1000))
                         people=pose.detect(frame,timestamp)
@@ -130,10 +141,10 @@ class Engine:
                     fps=1/max(elapsed,.001) if not fps else .9*fps+.1/max(elapsed,.001)
                     largest=max(faces,key=lambda f:f['box'][2]*f['box'][3],default=None)
                     visual_frame=frame
-                    if largest:
+                    if largest and (s.visual in ('Activations','GradCAM') or s.dream_scope=='Face only'):
                         x,y,w,h=largest['box'];visual_frame=frame[y:y+h,x:x+w]
                     if s.visual!='Off' and now-last_visual>.15:
-                        latest(self.dream_input,(visualizer,visual_frame.copy(),s,self.generation));last_visual=now
+                        latest(self.dream_input,(visualizer,visual_frame.copy(),s,self.generation,largest is not None));last_visual=now
                     if self.capture_face.is_set():
                         self.capture_face.clear();saved=save_faces(frame,faces,self.captures)
                         self.events.put(('status',f'Saved {len(saved)} face crop(s) in {self.captures}' if saved else 'No faces detected to save'))
@@ -145,25 +156,46 @@ class Engine:
                     if source is not None:source.close();source=None
                     if pose is not None:pose.close();pose=None
                     active='Stopped';self.events.put(('source',active));self.generation+=1
-                self.stop.wait(.025 if active=='Image' else .005)
+                # Bound capture/inference work to 30 FPS instead of a busy loop.
+                self.stop.wait(max(.001,1/30-(time.monotonic()-cycle_start)))
         except Exception as error:self.events.put(('error',str(error)))
         finally:
             if source is not None:source.close()
             if pose is not None:pose.close()
 
     def _dream(self):
-        previous_generation=-1
+        rgb_dream=None;dream_model=None;previous_key=None;explainer=None;explained_model=None
         while not self.stop.is_set():
-            try:visualizer,frame,s,generation=self.dream_input.get(timeout=.2)
+            try:visualizer,frame,s,generation,has_face=self.dream_input.get(timeout=.2)
             except queue.Empty:continue
             if self.snapshot().visual=='Off' or generation!=self.generation:continue
             try:
-                if generation!=previous_generation:visualizer.previous=None
-                previous_generation=generation;start=time.monotonic()
+                key=(generation,s.dream_scope,s.dream_engine,s.dream_depth,s.dream_resolution,s.layer)
+                if key!=previous_key:
+                    visualizer.previous=None
+                    if rgb_dream is not None:rgb_dream.reset()
+                previous_key=key
+                start=time.monotonic()
+                caption=None
                 layer=s.layer if s.layer in visualizer.layers else visualizer.layers[0]
-                rendered=visualizer.render(frame,layer,s.visual,s.strength,s.steps,colorful=s.colorful)
+                if s.visual=='GradCAM':
+                    if not has_face:
+                        rendered=frame;caption='No face detected. Explanation needs a detected face; no heatmap is shown.'
+                    else:
+                        if explained_model is not visualizer.model:
+                            from gradcam import GradCAM
+                            explainer=GradCAM(visualizer.model);explained_model=visualizer.model
+                        rendered,details=explainer.explain(frame,s.explain_target);caption=details['caption']
+                elif s.visual=='DeepDream':
+                    if dream_model is not visualizer.model:
+                        from model_dream import ModelDream
+                        rgb_dream=ModelDream(visualizer.model);dream_model=visualizer.model
+                    rendered=rgb_dream.render(frame,layer,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful)
+                    caption='Your expression model drives this Dream. '+('Source colors preserved; the model still sees grayscale.' if s.colorful else 'Grayscale feature amplification.')
+                else:rendered=visualizer.render(frame,layer,s.visual,s.strength,s.steps,colorful=s.colorful)
                 if generation==self.generation:
-                    latest(self.visuals,dict(image=rendered,seconds=time.monotonic()-start,mode=s.visual,layer=layer,generation=generation))
+                    latest(self.visuals,dict(image=rendered,seconds=time.monotonic()-start,mode=s.visual,layer=layer,generation=generation,engine=s.dream_engine,scope=s.dream_scope,settings=s,caption=caption))
+                self.stop.wait(max(0,.15-(time.monotonic()-start)))
             except Exception as error:
                 self.events.put(('error','Visualization: '+str(error)));self.configure(visual='Off')
 

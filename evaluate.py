@@ -10,6 +10,7 @@ select_backend()
 
 
 def evaluate(model_path,dataset,architecture,note=''):
+    runtime=device_info()
     import keras
     from expression import build_model,LABELS
     from dataset import load_dataset
@@ -27,7 +28,7 @@ def evaluate(model_path,dataset,architecture,note=''):
         np.savez_compressed(model_path.with_suffix('.'+split+'.npz'),labels=y,probabilities=probabilities)
     digest=hashlib.sha256(model_path.read_bytes()).hexdigest()
     result=dict(architecture=architecture,dataset=audit,checkpoint_sha256=digest,labels=list(LABELS),
-                environment=device_info(),parameters=model.count_params(),note=note,**measurements)
+                environment=runtime,parameters=model.count_params(),note=note,**measurements)
     history={}
     history_path=model_path.parent/'history.csv'
     if history_path.exists():

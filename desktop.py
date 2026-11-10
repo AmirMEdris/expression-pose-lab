@@ -72,24 +72,29 @@ def main():
     content=tk.Frame(body,bg=bg);content.pack(side='left',fill='both',expand=True)
     def section(title):
         label(sidebar,title,10,mint).pack(anchor='w',padx=16,pady=(15,5))
-    colorful=tk.BooleanVar(value=False)
+    colorful=tk.BooleanVar(value=True)
+    explain_target=tk.StringVar(value='Top prediction');dream_engine=tk.StringVar(value='Expression');dream_scope=tk.StringVar(value='Whole frame');dream_quality=tk.StringVar(value='Balanced');focus_art=tk.BooleanVar(value=False)
     def selected_layer():
         if not layer_names:return ''
         return layer_names[{'Fine detail':0,'Shapes':len(layer_names)//2,'Abstract':len(layer_names)-1}[layer.get()]]
     def choose_visual():
-        visual.set({'Live view':'Off','Dream':'DeepDream','Feature maps':'Activations'}[visual_choice.get()]);configure()
+        visual.set({'Live view':'Off','Dream':'DeepDream','Feature maps':'Activations','Explain prediction':'GradCAM'}[visual_choice.get()]);configure()
     def configure():
         nonlocal last_visual
         last_visual=None
-        visual_choice.set({'Off':'Live view','DeepDream':'Dream','Activations':'Feature maps'}[visual.get()])
-        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get())
+        visual_choice.set({'Off':'Live view','DeepDream':'Dream','Activations':'Feature maps','GradCAM':'Explain prediction'}[visual.get()])
+        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get(),dream_engine=dream_engine.get(),dream_scope=dream_scope.get(),dream_depth=layer.get(),dream_resolution={'Quick':256,'Balanced':384,'Detailed':512}[dream_quality.get()],explain_target=explain_target.get())
+        live_canvas.master.grid();views.columnconfigure(0,weight=3)
         if visual.get()=='Off':
             visual_text.set('Visualization paused');vis_canvas.master.grid_remove()
             views.columnconfigure(1,weight=0)
         else:
             vis_canvas.master.grid()
             views.columnconfigure(1,weight=2)
-            visual_text.set('Brighter = stronger response within each tile. Tiles use separate scales.' if visual.get()=='Activations' else 'Pixels changed to amplify learned patterns. Color, if enabled, is artistic.')
+            visual_text.set('Brighter = stronger response within each tile. Tiles use separate scales.' if visual.get()=='Activations' else 'DeepDream amplifies features from your loaded expression model.')
+            if focus_art.get():live_canvas.master.grid_remove();views.columnconfigure(0,weight=0)
+        explain_box.pack_forget()
+        if visual.get()=='GradCAM':explain_box.pack(fill='x',before=settings_button,pady=5);visual_text.set('Explaining the largest detected face with the loaded expression model.')
         strength_box.pack_forget()
         if visual.get()=='DeepDream':strength_box.pack(fill='x',before=settings_button,pady=5)
     def parse_source():
@@ -116,22 +121,30 @@ def main():
     for name,caption in [('predictions','Expression predictions  ·  P'),('pose','Body pose  ·  E')]:
         ttk.Checkbutton(sidebar,text=caption,variable=variables[name],command=configure).pack(anchor='w',padx=12)
     section('Explore the model')
-    combo=ttk.Combobox(sidebar,textvariable=visual_choice,values=['Live view','Dream','Feature maps'],state='readonly');combo.pack(fill='x',padx=16,pady=3);combo.bind('<<ComboboxSelected>>',lambda e:choose_visual())
+    combo=ttk.Combobox(sidebar,textvariable=visual_choice,values=['Live view','Dream','Feature maps','Explain prediction'],state='readonly');combo.pack(fill='x',padx=16,pady=3);combo.bind('<<ComboboxSelected>>',lambda e:choose_visual())
+    explain_box=tk.Frame(sidebar,bg=panel)
+    label(explain_box,'Explain which class?',9,muted).pack(anchor='w',padx=16,pady=(5,0))
+    target_control=ttk.Combobox(explain_box,textvariable=explain_target,values=['Top prediction',*LABELS],state='readonly');target_control.pack(fill='x',padx=16,pady=3);target_control.bind('<<ComboboxSelected>>',lambda e:configure())
+    label(explain_box,'Largest face · warm = stronger support.\nColors show relative influence, not certainty.',9,muted,justify='left',wraplength=220).pack(anchor='w',padx=16,pady=4)
     strength_box=tk.Frame(sidebar,bg=panel)
+    label(strength_box,'Dream area',9,muted).pack(anchor='w',padx=16,pady=(5,0))
+    scope_control=ttk.Combobox(strength_box,textvariable=dream_scope,values=['Whole frame','Face only'],state='readonly');scope_control.pack(fill='x',padx=16,pady=3);scope_control.bind('<<ComboboxSelected>>',lambda e:configure())
+    ttk.Checkbutton(strength_box,text='Expand artwork',variable=focus_art,command=configure).pack(anchor='w',padx=12)
     label(strength_box,'Dream intensity',9,muted).pack(anchor='w',padx=16,pady=(5,0))
     ttk.Scale(strength_box,from_=.002,to=.06,variable=strength,command=lambda x:configure()).pack(fill='x',padx=16)
     def view_settings():
-        window=tk.Toplevel(root);window.title('View settings');window.geometry('570x620');window.configure(bg=panel);window.transient(root)
+        window=tk.Toplevel(root);window.title('View settings');window.geometry('570x850');window.configure(bg=panel);window.transient(root)
         label(window,'Make it yours',22).pack(anchor='w',padx=24,pady=(20,12))
         def choice(title,var,values,explanation):
             label(window,title,11).pack(anchor='w',padx=24,pady=(10,4))
             control=ttk.Combobox(window,textvariable=var,values=values,state='readonly');control.pack(anchor='w',padx=24)
             control.bind('<<ComboboxSelected>>',lambda e:configure())
             label(window,explanation,9,muted,wraplength=510,justify='left').pack(anchor='w',padx=24,pady=4)
-        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'Chooses an early, middle, or late layer. Later layers combine simpler patterns. These labels describe depth, not guaranteed meanings.')
+        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'Fine detail emphasizes textures. Deeper features combine patterns. These are creative presets, not emotion labels.')
+        choice('Dream resolution',dream_quality,['Quick','Balanced','Detailed'],'256, 384, or 512 pixels on the longest edge, preserving shape. Higher detail costs more GPU time; CPU is capped at 256.')
         choice('Dream processing',steps,['Quick','Balanced','Detailed'],'1, 3, or 6 pixel-update steps per refresh. More steps change the image further but can slow updates. This does not train the model.')
-        ttk.Checkbutton(window,text='Add artistic colors to Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)
-        label(window,'The model sees grayscale. Added colors are a display effect.',9,muted).pack(anchor='w',padx=24)
+        ttk.Checkbutton(window,text='Preserve input colors in Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)
+        label(window,'Patterns come from your expression model. Original colors are preserved; the model still sees grayscale.',9,muted).pack(anchor='w',padx=24)
         choice('Camera device',camera,['0','1','2','3'],'Choose another device if needed, then click Camera again.')
         label(window,'Screen crop: left, top, width, height (optional)',10).pack(anchor='w',padx=24,pady=(10,4))
         ttk.Entry(window,textvariable=region,width=45).pack(anchor='w',padx=24)
@@ -166,7 +179,7 @@ def main():
         canvas.create_text(w/2,h/2+48,text=description,fill=muted,font=('Segoe UI',10),width=w-40,justify='center',anchor='n')
     def draw(canvas,array,key):
         w=max(20,canvas.winfo_width());h=max(20,canvas.winfo_height())
-        image=Image.fromarray(cv2.cvtColor(array,cv2.COLOR_BGR2RGB));image.thumbnail((w,h),Image.Resampling.LANCZOS)
+        image=Image.fromarray(cv2.cvtColor(array,cv2.COLOR_BGR2RGB));scale=min(w/image.width,h/image.height);image=image.resize((max(1,round(image.width*scale)),max(1,round(image.height*scale))),Image.Resampling.LANCZOS)
         photos[key]=ImageTk.PhotoImage(image);canvas.delete('all');canvas.create_image(w//2,h//2,image=photos[key])
     probs=tk.Canvas(content,bg=panel,highlightthickness=0,height=126);probs.pack(fill='x',pady=(12,0))
     def probabilities(faces):
@@ -208,7 +221,7 @@ def main():
         elif key=='i':variables['help'].set(not variables['help'].get());help_label.config(text=help_text if variables['help'].get() else 'I  show controls')
         elif key=='f':variables['fps'].set(not variables['fps'].get())
         elif key=='space':engine.capture_face.set()
-        elif key=='d':visual.set({'Off':'Activations','Activations':'DeepDream','DeepDream':'Off'}[visual.get()]);configure()
+        elif key=='d':visual.set({'Off':'Activations','Activations':'DeepDream','DeepDream':'GradCAM','GradCAM':'Off'}[visual.get()]);configure()
         elif key in ('escape','q'):close()
     root.bind('<Key>',keyboard)
     closing=False
@@ -255,8 +268,8 @@ def main():
         except queue.Empty:pass
         try:
             packet=engine.visuals.get_nowait()
-            if packet['generation']==engine.generation and visual.get()==packet['mode'] and packet['layer']==selected_layer() and current_source!='Stopped':
-                last_visual=packet['image'];draw(vis_canvas,last_visual,'visual');visual_text.set(('Feature maps: brighter means stronger response within each tile.' if packet['mode']=='Activations' else 'DeepDream: amplified patterns from the largest face, or the whole image.'))
+            if packet['generation']==engine.generation and packet['settings']==engine.snapshot() and current_source!='Stopped':
+                last_visual=packet['image'];draw(vis_canvas,last_visual,'visual');visual_text.set(packet.get('caption') or ('Feature maps: brighter means stronger response within each tile.' if packet['mode']=='Activations' else f'{packet["engine"]} Dream · {packet["scope"]} · {packet["seconds"]:.2f}s / refresh. Artwork, not an emotion explanation.'))
         except queue.Empty:pass
         root.after(40,poll)
     root.after(100,lambda:(empty(live_canvas,'YOUR VIEW STARTS HERE','Choose Camera, Screen, or Open image.\nNothing is recorded automatically.'),empty(vis_canvas,'LOOK INSIDE THE MODEL','Explore real feature maps or gradient-ascent DeepDream.\nArtistic output, not an explanation of emotion.'),probabilities([])))

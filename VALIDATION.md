@@ -40,3 +40,12 @@ Added explicit backend fallback, first-frame validation, cleanup on failed attem
 - Recovered baseline evaluation: 92.81% accuracy, 92.21% macro F1 on this test partition, **not a verified held-out result** because its original training provenance is unknown. Its bundled report states this caveat explicitly.
 - The app defaults to the recovered baseline. Results are attached to model hashes; missing or mismatched reports produce an explanation instead of a file picker or unrelated metrics.
 - The consumer UI has no training controls. Internal layer names are replaced with explained depth choices; iteration counts live behind explained processing presets. Feature maps and Dream default to grayscale. Added Dream colors are explicitly optional artistic mapping.
+
+## Model-driven Dream, Grad-CAM, and residual training
+
+- 42 fast tests cover metrics, dataset handling, source switching, preview aspect ratios, class-specific heatmap weighting, and zero/negative evidence handling.
+- Dream uses only the loaded expression classifier’s convolution weights, cloned to accept larger images. Source chroma can be restored after luminance ascent; no separate ImageNet network is used. Classification preprocessing remains 48×48 grayscale.
+- Grad-CAM targets class logits where the supported model head exposes them, with a probability-gradient fallback for other heads. It leaves classification weights and predictions unchanged, supports selecting a class, and labels its relative, coarse nature. Missing faces never receive a fabricated heatmap.
+- Capture is capped at 30 FPS, visualization work uses a separate bounded queue, still-image face inference is cached, and pose loads lazily. These resource controls are not a guaranteed frame-rate claim.
+- The residual run completed all 50 epochs with 1,773,735 parameters. Selected-checkpoint test accuracy: 62.1501%; macro F1: 58.3602%. The earlier compact candidate scored 59.0705% and 53.7231% on the same 3,572-image partition. This is not an independent external benchmark; the old baseline’s unknown training exposure still prevents a clean comparison with it.
+- Privacy audit of tracked files and history found only the synthetic documentation gallery as added media. No camera photo, face crop, recording, training image, or attached screenshot is committed.

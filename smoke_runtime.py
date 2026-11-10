@@ -27,12 +27,28 @@ def main():
         engine.configure(predictions=True,visual='Activations');engine.switch('Image',image=args.image)
         frame=wait(engine.frames);features=wait(engine.visuals)
         result.update(faces=len(frame['faces']),source=frame['source'],feature_shape=list(features['image'].shape))
-        engine.configure(visual='DeepDream',colorful=False)
+        engine.configure(visual='DeepDream',colorful=False,dream_engine='Expression')
         dream=wait(engine.visuals,lambda p:p['mode']=='DeepDream')
         import numpy as np
         assert np.array_equal(dream['image'][:,:,0],dream['image'][:,:,1])
         assert np.array_equal(dream['image'][:,:,1],dream['image'][:,:,2])
         result.update(dream_shape=list(dream['image'].shape),dream_seconds=dream['seconds'],grayscale=True)
+        engine.configure(colorful=True,dream_scope='Whole frame',dream_resolution=256)
+        color=wait(engine.visuals,lambda p:p['settings'].colorful)
+        assert color['image'].shape[:2]==(218,256)
+        result.update(color_shape=list(color['image'].shape),color_seconds=color['seconds'])
+        engine.configure(visual='GradCAM',explain_target='happy')
+        explained=wait(engine.visuals,lambda p:p['mode']=='GradCAM')
+        assert 'happy' in explained['caption']
+        result['explanation']=explained['caption']
+        import cv2
+        args.output.parent.mkdir(parents=True,exist_ok=True)
+        blank=args.output.with_name('blank-explanation-test.png')
+        cv2.imwrite(str(blank),np.zeros((128,192,3),np.uint8))
+        previous=engine.generation;engine.switch('Image',image=str(blank))
+        no_face=wait(engine.visuals,lambda p:p['generation']>previous and p['mode']=='GradCAM')
+        assert no_face['caption'].startswith('No face detected') and not no_face['image'].any()
+        result['no_face_explanation']='passed'
         assert engine.frames.qsize()<=1 and engine.visuals.qsize()<=1
         result['status']='passed'
     finally:

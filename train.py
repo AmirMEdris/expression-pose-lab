@@ -10,7 +10,7 @@ import numpy as np
 os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL','2')
 
 
-def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_size=128, progress=print, cancel=None):
+def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_size=128, progress=print, cancel=None, learning_rate=None, weighting=None):
     from backend import select_backend,device_info,predict_numpy
     select_backend()
     import keras as k
@@ -33,7 +33,10 @@ def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_siz
     progress('Dataset counts: '+str(audit['counts']))
     model=create_model(architecture)
     (output/'model-config.json').write_text(model.to_json(),encoding='utf-8')
-    model.compile(optimizer=k.optimizers.Adam(learning_rate=1e-3),loss='sparse_categorical_crossentropy',metrics=['accuracy'],jit_compile=False)
+    learning_rate=learning_rate or (.0003 if architecture=='residual' else .001)
+    weighting=weighting or ('sqrt' if architecture=='residual' else 'balanced')
+    optimizer=k.optimizers.AdamW(learning_rate=learning_rate,weight_decay=1e-4,clipnorm=1.) if architecture=='residual' else k.optimizers.Adam(learning_rate=learning_rate)
+    model.compile(optimizer=optimizer,loss='sparse_categorical_crossentropy',metrics=['accuracy'],jit_compile=False)
     x,y=data['train']
     class Batches(k.utils.PyDataset):
         def __init__(self,x,y,augment=False):
@@ -57,6 +60,8 @@ def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_siz
     validation=Batches(*data['validation'])
     class_counts=np.bincount(y,minlength=7)
     weights={i:float(len(y)/(7*max(1,n))) for i,n in enumerate(class_counts)}
+    if weighting=='sqrt':weights={i:min(3.,float(np.sqrt(w))) for i,w in weights.items()}
+    if weighting=='none':weights=None
     class Progress(k.callbacks.Callback):
         def on_epoch_end(self,epoch,logs=None):
             progress(f'Epoch {epoch+1}/{epochs}: '+', '.join(f'{k}={v:.4f}' for k,v in (logs or {}).items()))
@@ -64,7 +69,8 @@ def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_siz
         def on_train_batch_end(self,batch,logs=None):
             if cancel is not None and cancel.is_set(): self.model.stop_training=True
     callbacks=[k.callbacks.ModelCheckpoint(str(output/'best.keras'),monitor='val_loss',save_best_only=True),
-               k.callbacks.EarlyStopping(monitor='val_loss',patience=6,restore_best_weights=True),
+               k.callbacks.ModelCheckpoint(str(output/'latest.keras')),
+               k.callbacks.EarlyStopping(monitor='val_loss',patience=10 if architecture=='residual' else 6,restore_best_weights=True),
                k.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=.5,patience=3,min_lr=1e-6),
                k.callbacks.CSVLogger(str(output/'history.csv')),Progress()]
     start=time.monotonic()
@@ -79,6 +85,7 @@ def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_siz
     np.savez_compressed(output/'test-predictions.npz',labels=ty,probabilities=probabilities)
     result=dict(architecture=architecture,dataset=audit,seed=seed,epochs_completed=len(history['loss']),requested_epochs=epochs,
                 batch_size=batch_size,parameters=model.count_params(),training_seconds=time.monotonic()-start,
+                learning_rate=learning_rate,weighting=weighting,optimizer=type(optimizer).__name__,
                 checkpoint_sha256=hashlib.sha256((output/'best.keras').read_bytes()).hexdigest(),labels=list(LABELS),
                 environment=dict(python=platform.python_version(),keras=k.__version__,runtime=device,numpy=np.__version__,platform=platform.platform()),
                 augmentation='Horizontal flip, translation 6%; training only',class_weight=weights,test=metrics)
@@ -92,9 +99,10 @@ def run(dataset, output, architecture='compact', epochs=20, seed=2026, batch_siz
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('dataset',type=Path);p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--architecture',choices=['compact','spatial','baseline','original'],default='spatial')
+    p.add_argument('--architecture',choices=['compact','spatial','residual','baseline','original'],default='residual')
     p.add_argument('--epochs',type=int,default=20);p.add_argument('--seed',type=int,default=2026);p.add_argument('--batch-size',type=int,default=128)
-    a=p.parse_args();run(a.dataset,a.output,a.architecture,a.epochs,a.seed,a.batch_size,progress=lambda x:print(x,flush=True))
+    p.add_argument('--learning-rate',type=float);p.add_argument('--weighting',choices=['none','sqrt','balanced'])
+    a=p.parse_args();run(a.dataset,a.output,a.architecture,a.epochs,a.seed,a.batch_size,progress=lambda x:print(x,flush=True),learning_rate=a.learning_rate,weighting=a.weighting)
 
 
 if __name__=='__main__':main()

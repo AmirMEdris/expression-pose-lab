@@ -10,7 +10,7 @@ Open **Expression Lab.exe** from the portable Windows folder. Keep `_internal` b
 
 1. Choose **Camera**, **Screen**, or **Open image**.
 2. Turn on **Expression predictions** or **Body pose** when you want those overlays.
-3. Choose **Live view**, **Dream**, or **Feature maps** under Explore the model.
+3. Choose **Live view**, **Dream**, **Feature maps**, or **Explain prediction** under Explore the model.
 4. **Save face crops** saves detected faces. **Save neural artwork** exports the visualization. Nothing is recorded automatically.
 
 The default view gives the input the available space. The neural panel appears only when you choose a visualization. Training is a separate developer tool, not an app button. **Import model** accepts a compatible `.keras` checkpoint and its matching `.json` metadata. **Model results** opens the evaluation report attached to the loaded model, verified against the checkpoint hash; it never asks you to browse for an arbitrary report.
@@ -21,15 +21,19 @@ The default view gives the input the available space. The neural panel appears o
 | --- | --- |
 | Live view | Your input with optional expression and pose overlays. |
 | Feature maps | Responses from 16 filters. Brighter means stronger response **within that tile**. Each tile has its own scale; these are not class probabilities or an explanation of a prediction. |
-| Dream | Gradient ascent changes the grayscale input pixels to amplify selected neural features. It starts from the largest detected face, or the full input if no face is detected. |
+| Dream | Multiscale gradient ascent through the loaded expression model’s convolutional features. The same weights operate on a larger image; classification still uses 48×48 faces. |
+| Dream area | Whole frame (default) or Face only. Face only uses the largest detected face, falling back to the whole frame when none is found. |
+| Expand artwork | Gives the artwork the full available viewport instead of showing it beside the live input. Screen input plus Whole frame processes your screen scene. |
 | Dream intensity | How far pixels change during each update. More is not more accurate. |
 | Pattern depth, in View settings | Fine detail / Shapes / Abstract select early / middle / late convolution layers. These are navigation labels, not claims about a layer's exact semantic meaning. |
 | Dream processing, in View settings | Quick / Balanced / Detailed perform 1 / 3 / 6 pixel-update steps per refresh. More steps take more time; they **do not retrain the model**. |
-| Artistic colors, in View settings | Optional display palette for Dream. Off by default. The expression model sees grayscale; color is not learned emotional information. |
+| Preserve input colors | Your model changes luminance; original chroma is preserved. The classifier still sees grayscale. |
+| Explain prediction | Grad-CAM for the largest detected face using the loaded classifier. Choose a class; warm areas show relative positive support, not certainty. |
+| Dream resolution, in View settings | Quick / Balanced / Detailed cap the longest edge at 256 / 384 / 512 pixels without stretching. CPU is capped at 256. |
 
 ### What is trained—and what is not
 
-The app still defaults to the **recovered historical baseline**, not the missing final capstone model. A new compact candidate was trained from scratch, but its run stopped after 27 of 30 requested epochs. Evaluation of its saved best validation-loss checkpoint produced **59.1% test accuracy and 53.7% macro F1** on 3,572 deduplicated FER2013 test images. This is a development candidate, not a demonstrated improvement or a production-quality claim.
+The app still defaults to the **recovered historical baseline**, not the missing final capstone model. The new residual candidate completed 50 epochs and scored **62.15% test accuracy and 58.36% macro F1**, improving over the compact candidate below on the same deduplicated FER2013 partition. It has 1,773,735 parameters versus the recovered baseline’s 2,787,015 (about 36% fewer). Its checkpoint was selected by validation loss. This is a comparison with the compact experiment, not proof of superiority to the lost FinalModel or a live-camera benchmark. A new compact candidate was trained from scratch, but its run stopped after 27 of 30 requested epochs. Evaluation of its saved best validation-loss checkpoint produced **59.1% test accuracy and 53.7% macro F1** on 3,572 deduplicated FER2013 test images. This is a development candidate, not a demonstrated improvement or a production-quality claim.
 
 The historical baseline scored 92.8% on those images, but its original training-split provenance is unknown. That number may reflect prior exposure and **must not be presented as clean held-out accuracy**. A second spatial candidate collapsed during training and is not shipped as a recommended model. Live-camera accuracy remains unmeasured. See [dataset protocol](DATASET.md) and the checkpoint-specific reports for the full context.
 
@@ -39,15 +43,23 @@ The Windows GPU path uses Keras with PyTorch CUDA. Expression inference and Deep
 
 For a fresh NVIDIA source environment, install `requirements-gpu.txt` instead of `requirements.txt`. The default backend chooses PyTorch when installed and otherwise TensorFlow. A CUDA-enabled PyTorch installation falls back to CPU when no compatible GPU is available. Set `KERAS_BACKEND=tensorflow` before launch to explicitly use the TensorFlow installation. The portable GPU bundle is large because it includes the CUDA runtime.
 
+Dream and prediction explanations both use the loaded expression classifier. No unrelated ImageNet model drives the artwork. Dream clones the convolutional feature graph with exactly the same weights and flexible image dimensions, then uses coarse-to-fine ascent and jitter. Its source-color option restores chroma after luminance optimization. Applying 48×48-trained filters at larger sizes is an artistic extrapolation, not a higher-resolution accuracy claim. Truly learned color features would require labeled RGB training data.
+
+Grad-CAM uses class gradients from the loaded model, without changing its weights or softmax. It is a coarse, relative localization of positive support for a class, not a causal proof or a measure of emotion. No face means no explanation heatmap. See the [Keras Grad-CAM reference](https://keras.io/examples/vision/grad_cam/).
+
+Capture is capped at 30 FPS; artwork updates independently with bounded latest-frame queues. Actual speed depends on settings and hardware. Static-image face detections are reused until inference settings change; pose loads only when enabled. CPU Dream resolution is capped at 256 pixels on the longest edge.
+
 ### Training and automatic analytics
 
 Training remains separate from the everyday app:
 
 ```powershell
-python train.py path\to\fer2013.zip --architecture compact --epochs 30 --output experiments\new-run
+python train.py path\to\fer2013.zip --architecture residual --epochs 50 --output experiments\new-run
 ```
 
-Each completed run automatically generates learning curves, a confusion matrix (rows=true, columns=predicted), per-class precision/recall/F1, calibration diagnostics, JSON metrics, and saved predictions in an offline HTML report. No manual plotting step is required. Import the resulting `best.keras` with `best.json` to use it in the app; its report is discovered automatically. The training architectures include the recovered baseline, a compact candidate, a spatial candidate, and a reconstruction of the original final architecture. They all train from scratch. The large original model needs a smaller batch size, for example `--batch-size 16`.
+Each completed run automatically generates learning curves, a confusion matrix (rows=true, columns=predicted), per-class precision/recall/F1, calibration diagnostics, JSON metrics, and saved predictions in an offline HTML report. No manual plotting step is required. Import the resulting `best.keras` with `best.json` to use it in the app; its report is discovered automatically. Architectures include residual, compact, spatial, the recovered baseline, and a reconstruction of the original final architecture. They all train from scratch. The large original model needs a smaller batch size, for example `--batch-size 16`.
+
+The residual candidate uses four skip-connected convolution blocks (32/64/128/192 channels), a spatial dense head, dropout, AdamW, gradient clipping, and square-root class weights capped at 3. Its default learning rate is 0.0003. These are training hypotheses, not an accuracy guarantee. Checkpoints are selected by validation loss, and both the best and latest checkpoints are preserved. Class weighting can be changed with `--weighting none|sqrt|balanced`; record these choices when comparing runs.
 
 ---
 
@@ -134,7 +146,7 @@ This is a **coverage check, not proof of correct alignment**. Wrong but confiden
 
 ## Model provenance and limits
 
-Expression weights come from `model_filter.h5` in original commit `514316f2e5dce38a0e8ab35b50807f44fc57a2a4`. This is an early baseline, **not the missing FinalModel**. The original README credits the baseline architecture to Ashadullah Shawon. We have not retrained it or established new accuracy results.
+Expression weights come from `model_filter.h5` in original commit `514316f2e5dce38a0e8ab35b50807f44fc57a2a4`. This is an early baseline, **not the missing FinalModel**. The original README credits the baseline architecture to Ashadullah Shawon. Its descriptive evaluation is subject to the unknown training-exposure caveat above.
 
 Pose weights are the version-1 MediaPipe Pose Landmarker lite bundle, downloaded from Google's model hosting. See [Google's task documentation](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker). Models are downloaded separately and retain their respective terms; this repository does not claim ownership of third-party models or imagery.
 
@@ -142,10 +154,10 @@ Expression labels describe model classifications of visible faces, not a person'
 
 ## Next milestones to build together
 
-1. **Reliable evaluation:** restore FER2013; preserve its documented partitions; use validation for tuning and an untouched test set for final reporting. Report macro F1, per-class recall, and a correctly oriented confusion matrix.
+1. **External evaluation:** test on a separate, consented camera dataset and audit near-duplicates and identity overlap. FER2013 recovery, exact deduplication, and automatic reports are implemented.
 2. **Better face detection:** measure failures on real camera footage, then compare a modern detector against the Haar baseline.
 3. **Video behavior:** benchmark CPU latency/FPS, add stable tracking and temporal smoothing, and test camera capture on the target device.
 4. **Training:** compare controlled architecture/augmentation changes and retain experiment configurations, seeds, metrics, and checkpoints.
-5. **Interface:** decide together whether the next interface should be a desktop app or a browser demo.
+5. **RGB expressions:** obtain a suitable labeled color dataset, adapt preprocessing and metadata, then compare against the grayscale classifier on a controlled evaluation.
 
 See `VALIDATION.md` for the exact checks performed on the first milestone.

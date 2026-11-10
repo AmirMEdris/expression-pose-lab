@@ -42,9 +42,31 @@ def original_final_model():
     return m
 
 
+def residual_model():
+    """Skip connections preserve gradients; spatial head retains feature locations."""
+    from backend import select_backend
+    select_backend()
+    from keras import layers as L,Model,Input
+    inputs=Input((48,48,1))
+    x=L.Conv2D(32,3,padding='same',use_bias=False)(inputs)
+    x=L.BatchNormalization()(x);x=L.Activation('relu')(x)
+    for filters,stride in ((32,1),(64,2),(128,2),(192,2)):
+        shortcut=x
+        y=L.Conv2D(filters,3,strides=stride,padding='same',use_bias=False)(x)
+        y=L.BatchNormalization()(y);y=L.Activation('relu')(y)
+        y=L.Conv2D(filters,3,padding='same',use_bias=False)(y);y=L.BatchNormalization()(y)
+        if stride!=1 or x.shape[-1]!=filters:
+            shortcut=L.Conv2D(filters,1,strides=stride,padding='same',use_bias=False)(shortcut)
+            shortcut=L.BatchNormalization()(shortcut)
+        x=L.Add()([shortcut,y]);x=L.Activation('relu')(x);x=L.SpatialDropout2D(.1)(x)
+    x=L.Flatten()(x);x=L.Dense(128,activation='relu')(x);x=L.Dropout(.35)(x)
+    return Model(inputs,L.Dense(7,activation='softmax',dtype='float32')(x),name='expression_residual')
+
+
 def create_model(name):
     if name=='compact': return compact_model()
     if name=='spatial': return compact_model(spatial=True)
+    if name=='residual': return residual_model()
     if name=='original': return original_final_model()
     if name=='baseline':
         from expression import build_model

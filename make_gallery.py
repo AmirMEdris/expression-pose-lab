@@ -7,26 +7,27 @@ from backend import select_backend
 select_backend()
 from expression import ExpressionEstimator
 from visualizations import FeatureVisualizer
+from model_dream import ModelDream
 
 
 def main():
     root=Path(__file__).parent;out=root/'docs';out.mkdir(exist_ok=True)
     model=ExpressionEstimator(root/'models/expression-baseline.h5').model
     visualizer=FeatureVisualizer(model)
-    y,x=np.mgrid[-1:1:48j,-1:1:48j]
-    pattern=np.uint8(np.clip(.5+.18*np.sin(17*x+8*y*y)+.16*np.cos(19*y-6*x*x),0,1)*255)
-    frame=cv2.cvtColor(pattern,cv2.COLOR_GRAY2BGR)
+    y,x=np.mgrid[-1:1:320j,-1:1:384j]
+    frame=np.uint8(np.clip(np.stack([.5+.25*np.sin(9*x+5*y*y),.5+.25*np.cos(10*y-3*x*x),.5+.25*np.sin(5*x+6*y)],axis=-1),0,1)*255)
     maps=visualizer.render(frame,visualizer.layers[2],'Activations')
     frames=[]
-    for _ in range(20):frames.append(visualizer.render(frame,visualizer.layers[4],'DeepDream',.025,6,colorful=True))
+    dream=ModelDream(model)
+    for _ in range(20):frames.append(dream.render(frame,visualizer.layers[-1],.025,6))
     def font(size):
         try:return ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',size)
         except OSError:return ImageFont.load_default(size=size)
     canvas=Image.new('RGB',(1440,790),'#0b1120');draw=ImageDraw.Draw(canvas)
     draw.text((48,30),'EXPRESSION + POSE LAB',font=font(19),fill='#5eead4')
     draw.text((48,68),'A window into the network.',font=font(46),fill='#e2e8f0')
-    draw.text((48,136),'Real activations. Gradient-ascent dreams. Your original model, explored anew.',font=font(20),fill='#94a3b8')
-    tiles=[('01 / INPUT','Synthetic pattern · no face data',frame),('02 / ACTIVATIONS','16 stable filter channels · layer 3',maps),('03 / DEEPDREAM','Gradient ascent · layer 5 + color palette',frames[-1])]
+    draw.text((48,136),'Your expression model. Larger dreams. Source colors preserved.',font=font(20),fill='#94a3b8')
+    tiles=[('01 / INPUT','Synthetic RGB pattern · no face data',frame),('02 / EXPRESSION FEATURES','16 grayscale filter responses',maps),('03 / YOUR MODEL DREAM','Your weights · source colors preserved',frames[-1])]
     for i,(title,caption,array) in enumerate(tiles):
         left=48+i*456
         draw.rounded_rectangle((left,200,left+432,732),radius=16,fill='#111c30',outline='#293548')

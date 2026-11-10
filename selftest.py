@@ -21,6 +21,20 @@ def run(root,output):
         probabilities=predict_numpy(estimator.model,frame[None,:,:,None].astype(np.float32)/255.)
         assert probabilities.shape==(1,7) and np.isfinite(probabilities).all() and np.isclose(probabilities.sum(),1)
         result['expression']='passed';result['parameters']=estimator.model.count_params()
+        from gradcam import GradCAM
+        explainer=GradCAM(estimator.model)
+        face=cv2.cvtColor(frame,cv2.COLOR_GRAY2BGR)
+        explained,details=explainer.explain(face)
+        from expression import LABELS
+        assert details['label']==LABELS[int(probabilities[0].argmax())]
+        assert abs(details['score']-float(probabilities[0].max()))<1e-5
+        assert np.isfinite(details['heatmap']).all()
+        _,other=explainer.explain(face,'happy')
+        assert other['label']=='happy'
+        # Explanation must not alter inference weights, activations, or probabilities.
+        np.testing.assert_allclose(predict_numpy(estimator.model,frame[None,:,:,None].astype(np.float32)/255.),probabilities,atol=1e-6)
+        cv2.imwrite(str(output/'gradcam.png'),explained)
+        result['GradCAM']=dict(status='passed',label=details['label'],score=details['score'])
         from visualizations import FeatureVisualizer
         visualizer=FeatureVisualizer(estimator.model)
         for mode in ('Activations','DeepDream'):
@@ -28,6 +42,18 @@ def run(root,output):
             assert image.dtype==np.uint8 and image.shape[2]==3 and image.std()>1
             cv2.imwrite(str(output/(mode.lower()+'.png')),image)
             result[mode]=dict(status='passed',seconds=time.monotonic()-before)
+        from model_dream import ModelDream
+        dream=ModelDream(estimator.model)
+        check=frame[None,:,:,None].astype(np.float32)/255.
+        np.testing.assert_allclose(predict_numpy(dream.extractor(visualizer.layers[-1]),check),predict_numpy(visualizer.extractor(visualizer.layers[-1]),check),atol=1e-5)
+        y,x=np.mgrid[:180,:256]
+        rgb=np.stack([(np.sin(x*.06)+1)*110+20,(np.cos(y*.08)+1)*110+20,(np.sin((x+y)*.04)+1)*110+20],axis=-1).astype(np.uint8)
+        before=time.monotonic();art=dream.render(rgb,visualizer.layers[-1],steps=3,long_edge=256,animate=False)
+        assert art.shape==rgb.shape and art.dtype==np.uint8
+        assert not np.array_equal(art[:,:,0],art[:,:,1])
+        assert np.abs(art.astype(float)-rgb).mean()>1
+        cv2.imwrite(str(output/'color-dream.png'),art)
+        result['ModelDream']=dict(status='passed',seconds=time.monotonic()-before,shape=list(art.shape))
         from pose import PoseEstimator
         pose=PoseEstimator(root/'models/pose_landmarker_lite.task')
         try:result['blank_pose_count']=len(pose.detect(np.zeros((256,256,3),np.uint8)))
