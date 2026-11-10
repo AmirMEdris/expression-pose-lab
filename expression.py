@@ -26,8 +26,10 @@ def describe(probabilities, threshold):
 
 
 def build_model():
-    from tensorflow.keras import Sequential
-    from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPooling2D, Flatten, Dense, Activation, Dropout
+    from backend import select_backend
+    select_backend()
+    from keras import Sequential
+    from keras.layers import Input, Conv2D, BatchNormalization, MaxPooling2D, Flatten, Dense, Activation, Dropout
     model = Sequential([Input(shape=(48, 48, 1))])
     for filters, kernel in ((64, 5), (128, 5), (256, 3)):
         for _ in range(2):
@@ -46,21 +48,41 @@ def build_model():
 
 class ExpressionEstimator:
     def __init__(self, model_path: Path, threshold=0.6):
+        from backend import select_backend,device_info
+        select_backend()
+        device_info()
         if not 0 <= threshold <= 1:
             raise ValueError('Expression threshold must be between 0 and 1')
         self.threshold = threshold
-        self.model = build_model()
-        self.model.load_weights(str(model_path))
+        model_path=Path(model_path)
+        if model_path.suffix=='.keras':
+            import json
+            import hashlib
+            from keras.models import load_model
+            metadata=json.loads(model_path.with_suffix('.json').read_text(encoding='utf-8'))
+            if metadata.get('labels')!=list(LABELS) or metadata.get('normalization')!='divide_by_255':
+                raise ValueError('Model metadata must declare the supported labels and divide_by_255 normalization')
+            if metadata.get('checkpoint_sha256')!=hashlib.sha256(model_path.read_bytes()).hexdigest():
+                raise ValueError('Model checkpoint does not match its metadata checksum')
+            self.model=load_model(model_path,compile=False,safe_mode=True)
+            if tuple(self.model.input_shape[1:])!=(48,48,1) or self.model.output_shape[-1]!=7:
+                raise ValueError('Expected a 48x48 grayscale model with seven outputs')
+        else:
+            self.model = build_model()
+            self.model.load_weights(str(model_path))
         self.detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         if self.detector.empty():
             raise RuntimeError('OpenCV face detector failed to load')
 
-    def detect(self, frame):
+    def detect(self, frame, predict=True):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         boxes = self.detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(48,48))
         if len(boxes) == 0:
             return []
+        if not predict:
+            return [dict(box=[int(v) for v in box]) for box in boxes]
         batch = np.concatenate([preprocess(gray[y:y+h, x:x+w]) for x,y,w,h in boxes])
-        predictions = self.model(batch, training=False).numpy()
+        from backend import predict_numpy
+        predictions = predict_numpy(self.model,batch)
         return [dict(box=[int(v) for v in box], **describe(pred, self.threshold))
                 for box, pred in zip(boxes, predictions)]

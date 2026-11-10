@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Expression Lab · Model results</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1120;color:#e2e8f0;font:16px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:60px 28px}.eyebrow{color:#5eead4;letter-spacing:.18em;font-size:12px}h1{font-size:46px;line-height:1.1;margin:18px 0}h2{margin-top:42px}.muted,small{color:#94a3b8}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}.card{border:1px solid #293548;background:#111c30;border-radius:16px;padding:24px}.number{font-size:34px;font-weight:700;color:#5eead4}table{width:100%;border-collapse:separate;border-spacing:4px}td,th{padding:12px;text-align:center;border-radius:5px}small{display:block}td small{color:#e2e8f0}th{font-size:12px}.scroll{overflow:auto}pre{overflow:auto;padding:22px;background:#111c30;border-radius:12px;font-size:13px}svg{width:100%;background:#111c30;border-radius:12px}svg text{fill:#94a3b8;font-size:13px}@media(max-width:650px){.cards{grid-template-columns:1fr}h1{font-size:32px}}
+</style><main><div class="eyebrow">EXPRESSION + POSE LAB / MODEL RESULTS</div><h1>How this model performs.</h1><p class="muted">Recovered capstone baseline · FER2013 evaluation</p><p>Historical weights: original training split provenance is unknown. These scores may be inflated by prior exposure to these images and are not a clean held-out benchmark. This is the model used by default in the app.</p>
+<div class="cards"><div class="card">Test accuracy<div class="number">92.8%</div></div><div class="card">Macro F1<div class="number">92.2%</div></div><div class="card">Test examples<div class="number">3,572</div></div></div>
+<p>These results describe facial-expression labels in this dataset. They do not establish a person's emotional state or guarantee performance on live camera footage.</p>
+
+<h2>Where predictions succeed—and fail</h2><p class="muted">Rows: true class. Columns: predicted class. Percentages normalized within each true class.</p><div class="scroll"><table><tr><th>True ↓ / Predicted →</th><th>angry</th><th>disgust</th><th>fear</th><th>happy</th><th>sad</th><th>surprise</th><th>neutral</th></tr><tr><th>angry</th><td style="background:rgba(94,234,212,0.819)">450<small>92%</small></td><td style="background:rgba(94,234,212,0.083)">2<small>0%</small></td><td style="background:rgba(94,234,212,0.103)">14<small>3%</small></td><td style="background:rgba(94,234,212,0.085)">3<small>1%</small></td><td style="background:rgba(94,234,212,0.095)">9<small>2%</small></td><td style="background:rgba(94,234,212,0.087)">4<small>1%</small></td><td style="background:rgba(94,234,212,0.088)">5<small>1%</small></td></tr><tr><th>disgust</th><td style="background:rgba(94,234,212,0.124)">3<small>5%</small></td><td style="background:rgba(94,234,212,0.793)">49<small>89%</small></td><td style="background:rgba(94,234,212,0.095)">1<small>2%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.109)">2<small>4%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td></tr><tr><th>fear</th><td style="background:rgba(94,234,212,0.101)">14<small>3%</small></td><td style="background:rgba(94,234,212,0.082)">1<small>0%</small></td><td style="background:rgba(94,234,212,0.818)">484<small>92%</small></td><td style="background:rgba(94,234,212,0.085)">3<small>1%</small></td><td style="background:rgba(94,234,212,0.098)">12<small>2%</small></td><td style="background:rgba(94,234,212,0.089)">6<small>1%</small></td><td style="background:rgba(94,234,212,0.088)">5<small>1%</small></td></tr><tr><th>happy</th><td style="background:rgba(94,234,212,0.085)">6<small>1%</small></td><td style="background:rgba(94,234,212,0.082)">2<small>0%</small></td><td style="background:rgba(94,234,212,0.090)">11<small>1%</small></td><td style="background:rgba(94,234,212,0.853)">848<small>97%</small></td><td style="background:rgba(94,234,212,0.085)">5<small>1%</small></td><td style="background:rgba(94,234,212,0.085)">6<small>1%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td></tr><tr><th>sad</th><td style="background:rgba(94,234,212,0.092)">9<small>2%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.111)">23<small>4%</small></td><td style="background:rgba(94,234,212,0.091)">8<small>1%</small></td><td style="background:rgba(94,234,212,0.804)">535<small>91%</small></td><td style="background:rgba(94,234,212,0.085)">4<small>1%</small></td><td style="background:rgba(94,234,212,0.096)">12<small>2%</small></td></tr><tr><th>surprise</th><td style="background:rgba(94,234,212,0.084)">2<small>0%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.090)">5<small>1%</small></td><td style="background:rgba(94,234,212,0.086)">3<small>1%</small></td><td style="background:rgba(94,234,212,0.082)">1<small>0%</small></td><td style="background:rgba(94,234,212,0.855)">397<small>97%</small></td><td style="background:rgba(94,234,212,0.084)">2<small>0%</small></td></tr><tr><th>neutral</th><td style="background:rgba(94,234,212,0.094)">11<small>2%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.099)">15<small>2%</small></td><td style="background:rgba(94,234,212,0.098)">14<small>2%</small></td><td style="background:rgba(94,234,212,0.115)">27<small>4%</small></td><td style="background:rgba(94,234,212,0.089)">7<small>1%</small></td><td style="background:rgba(94,234,212,0.785)">552<small>88%</small></td></tr></table></div>
+<h2>Every class counts</h2><table><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr><tr><th>angry</th><td>90.9%</td><td>92.4%</td><td>91.6%</td><td>487</td></tr><tr><th>disgust</th><td>90.7%</td><td>89.1%</td><td>89.9%</td><td>55</td></tr><tr><th>fear</th><td>87.5%</td><td>92.2%</td><td>89.8%</td><td>525</td></tr><tr><th>happy</th><td>96.5%</td><td>96.6%</td><td>96.5%</td><td>878</td></tr><tr><th>sad</th><td>90.5%</td><td>90.5%</td><td>90.5%</td><td>591</td></tr><tr><th>surprise</th><td>93.6%</td><td>96.8%</td><td>95.2%</td><td>410</td></tr><tr><th>neutral</th><td>95.8%</td><td>88.2%</td><td>91.8%</td><td>626</td></tr></table>
+<h2>Confidence quality</h2><p>Expected calibration error: 0.030 (10 bins). Negative log-likelihood: 0.327. Raw probabilities are not calibrated; the app's uncertainty threshold is a display rule.</p>
+<h2>Reproducibility</h2><pre>{
+  &quot;protocol&quot;: &quot;Original FER2013 partitions recovered from ZIP filenames: train / PublicTest validation / PrivateTest final test&quot;,
+  &quot;seed&quot;: 2026,
+  &quot;fingerprint&quot;: &quot;4b0dc736306a8bb87878646ea1f124d2765c1e8adf5d0695a251bda742c331dd&quot;,
+  &quot;duplicate_policy&quot;: &quot;Exact decoded pixels deduplicated: test priority, then validation, then train. No near-duplicate or identity audit.&quot;,
+  &quot;duplicates_removed&quot;: {
+    &quot;test&quot;: 17,
+    &quot;validation&quot;: 69,
+    &quot;train&quot;: 1767
+  },
+  &quot;counts&quot;: {
+    &quot;test&quot;: 3572,
+    &quot;validation&quot;: 3520,
+    &quot;train&quot;: 26942
+  },
+  &quot;class_counts&quot;: {
+    &quot;test&quot;: [
+      487,
+      55,
+      525,
+      878,
+      591,
+      410,
+      626
+    ],
+    &quot;validation&quot;: [
+      459,
+      54,
+      488,
+      889,
+      649,
+      382,
+      599
+    ],
+    &quot;train&quot;: [
+      3790,
+      352,
+      3809,
+      7031,
+      4677,
+      2460,
+      4823
+    ]
+  }
+}</pre><p class="muted">Architecture, seed, environment, checkpoint digest and metrics are in metrics.json. Per-example test probabilities are in test-predictions.npz. Dataset images are not embedded in this report.</p></main></html>

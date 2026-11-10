@@ -8,6 +8,7 @@ if not exist ".venv\Scripts\python.exe" (
 )
 echo Starting Expression + Pose Lab on camera 0.
 echo Model loading may take 20-40 seconds. Press Q or Escape in the live window to quit.
-echo No video or screenshots are saved by this launcher.
+echo A switches camera/screen. P predictions. E pose. I help. F FPS. SPACE saves faces.
+echo Nothing is saved automatically. SPACE saves detected face crops.
 ".venv\Scripts\python.exe" app.py --camera 0
 if errorlevel 1 pause

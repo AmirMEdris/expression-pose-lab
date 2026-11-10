@@ -1,0 +1,55 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Expression Lab · Model results</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1120;color:#e2e8f0;font:16px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:60px 28px}.eyebrow{color:#5eead4;letter-spacing:.18em;font-size:12px}h1{font-size:46px;line-height:1.1;margin:18px 0}h2{margin-top:42px}.muted,small{color:#94a3b8}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}.card{border:1px solid #293548;background:#111c30;border-radius:16px;padding:24px}.number{font-size:34px;font-weight:700;color:#5eead4}table{width:100%;border-collapse:separate;border-spacing:4px}td,th{padding:12px;text-align:center;border-radius:5px}small{display:block}td small{color:#e2e8f0}th{font-size:12px}.scroll{overflow:auto}pre{overflow:auto;padding:22px;background:#111c30;border-radius:12px;font-size:13px}svg{width:100%;background:#111c30;border-radius:12px}svg text{fill:#94a3b8;font-size:13px}@media(max-width:650px){.cards{grid-template-columns:1fr}h1{font-size:32px}}
+</style><main><div class="eyebrow">EXPRESSION + POSE LAB / MODEL RESULTS</div><h1>How this model performs.</h1><p class="muted">compact · FER2013 evaluation</p><p>Development candidate. Training stopped after 27 of 30 requested epochs; this evaluates the saved best validation-loss checkpoint. Not the app default.</p>
+<div class="cards"><div class="card">Test accuracy<div class="number">59.1%</div></div><div class="card">Macro F1<div class="number">53.7%</div></div><div class="card">Test examples<div class="number">3,572</div></div></div>
+<p>These results describe facial-expression labels in this dataset. They do not establish a person's emotional state or guarantee performance on live camera footage.</p>
+<h3>Learning curves · cross-entropy</h3><p class="muted">Mint: training · Violet: validation · Epoch 1–27</p><svg role="img" aria-label="Learning curves · cross-entropy" viewBox="0 0 760 260"><path d="M45 25V230H735" stroke="#64748b" fill="none"/><text x="5" y="40">3.39</text><text x="20" y="230">0</text><polyline points="45.0,120.7 71.2,124.6 97.3,128.8 123.5,133.7 149.6,138.3 175.8,142.6 201.9,145.7 228.1,147.4 254.2,149.8 280.4,151.5 306.5,152.9 332.7,154.5 358.8,155.4 385.0,157.6 411.2,157.4 437.3,158.9 463.5,162.6 489.6,162.8 515.8,163.5 541.9,165.0 568.1,165.9 594.2,166.7 620.4,167.2 646.5,167.3 672.7,168.3 698.8,169.0 725.0,169.1" fill="none" stroke="#5eead4" stroke-width="3"/><polyline points="45.0,119.3 71.2,115.5 97.3,133.7 123.5,134.0 149.6,135.7 175.8,120.2 201.9,137.2 228.1,127.3 254.2,150.0 280.4,147.7 306.5,139.5 332.7,151.7 358.8,157.0 385.0,40.0 411.2,150.3 437.3,156.8 463.5,162.6 489.6,157.7 515.8,151.0 541.9,158.8 568.1,165.1 594.2,166.8 620.4,164.0 646.5,166.7 672.7,163.4 698.8,166.8 725.0,164.4" fill="none" stroke="#a78bfa" stroke-width="3"/></svg><h3>Learning curves · accuracy</h3><p class="muted">Mint: training · Violet: validation · Epoch 1–27</p><svg role="img" aria-label="Learning curves · accuracy" viewBox="0 0 760 260"><path d="M45 25V230H735" stroke="#64748b" fill="none"/><text x="5" y="40">1.00</text><text x="20" y="230">0</text><polyline points="45.0,197.5 71.2,190.5 97.3,181.3 123.5,168.5 149.6,161.7 175.8,154.9 201.9,151.3 228.1,149.6 254.2,146.1 280.4,143.4 306.5,141.7 332.7,140.4 358.8,138.3 385.0,136.2 411.2,136.3 437.3,133.9 463.5,130.1 489.6,129.9 515.8,129.1 541.9,127.5 568.1,126.3 594.2,125.9 620.4,124.7 646.5,125.1 672.7,123.8 698.8,123.5 725.0,122.9" fill="none" stroke="#5eead4" stroke-width="3"/><polyline points="45.0,227.1 71.2,197.7 97.3,165.2 123.5,167.1 149.6,174.7 175.8,185.7 201.9,153.0 228.1,171.5 254.2,146.2 280.4,147.2 306.5,158.6 332.7,145.7 358.8,139.8 385.0,208.8 411.2,145.2 437.3,133.4 463.5,127.8 489.6,132.3 515.8,141.5 541.9,133.1 568.1,126.2 594.2,122.9 620.4,125.2 646.5,121.6 672.7,126.3 698.8,121.7 725.0,124.5" fill="none" stroke="#a78bfa" stroke-width="3"/></svg>
+<h2>Where predictions succeed—and fail</h2><p class="muted">Rows: true class. Columns: predicted class. Percentages normalized within each true class.</p><div class="scroll"><table><tr><th>True ↓ / Predicted →</th><th>angry</th><th>disgust</th><th>fear</th><th>happy</th><th>sad</th><th>surprise</th><th>neutral</th></tr><tr><th>angry</th><td style="background:rgba(94,234,212,0.502)">257<small>53%</small></td><td style="background:rgba(94,234,212,0.141)">37<small>8%</small></td><td style="background:rgba(94,234,212,0.105)">15<small>3%</small></td><td style="background:rgba(94,234,212,0.114)">21<small>4%</small></td><td style="background:rgba(94,234,212,0.190)">67<small>14%</small></td><td style="background:rgba(94,234,212,0.103)">14<small>3%</small></td><td style="background:rgba(94,234,212,0.205)">76<small>16%</small></td></tr><tr><th>disgust</th><td style="background:rgba(94,234,212,0.138)">4<small>7%</small></td><td style="background:rgba(94,234,212,0.749)">46<small>84%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.080)">0<small>0%</small></td><td style="background:rgba(94,234,212,0.109)">2<small>4%</small></td><td style="background:rgba(94,234,212,0.109)">2<small>4%</small></td><td style="background:rgba(94,234,212,0.095)">1<small>2%</small></td></tr><tr><th>fear</th><td style="background:rgba(94,234,212,0.208)">84<small>16%</small></td><td style="background:rgba(94,234,212,0.126)">30<small>6%</small></td><td style="background:rgba(94,234,212,0.197)">77<small>15%</small></td><td style="background:rgba(94,234,212,0.114)">22<small>4%</small></td><td style="background:rgba(94,234,212,0.307)">149<small>28%</small></td><td style="background:rgba(94,234,212,0.214)">88<small>17%</small></td><td style="background:rgba(94,234,212,0.194)">75<small>14%</small></td></tr><tr><th>happy</th><td style="background:rgba(94,234,212,0.108)">31<small>4%</small></td><td style="background:rgba(94,234,212,0.092)">13<small>1%</small></td><td style="background:rgba(94,234,212,0.087)">8<small>1%</small></td><td style="background:rgba(94,234,212,0.725)">708<small>81%</small></td><td style="background:rgba(94,234,212,0.115)">38<small>4%</small></td><td style="background:rgba(94,234,212,0.100)">22<small>3%</small></td><td style="background:rgba(94,234,212,0.133)">58<small>7%</small></td></tr><tr><th>sad</th><td style="background:rgba(94,234,212,0.172)">68<small>12%</small></td><td style="background:rgba(94,234,212,0.111)">23<small>4%</small></td><td style="background:rgba(94,234,212,0.102)">16<small>3%</small></td><td style="background:rgba(94,234,212,0.129)">36<small>6%</small></td><td style="background:rgba(94,234,212,0.485)">299<small>51%</small></td><td style="background:rgba(94,234,212,0.094)">10<small>2%</small></td><td style="background:rgba(94,234,212,0.268)">139<small>24%</small></td></tr><tr><th>surprise</th><td style="background:rgba(94,234,212,0.115)">18<small>4%</small></td><td style="background:rgba(94,234,212,0.096)">8<small>2%</small></td><td style="background:rgba(94,234,212,0.123)">22<small>5%</small></td><td style="background:rgba(94,234,212,0.129)">25<small>6%</small></td><td style="background:rgba(94,234,212,0.088)">4<small>1%</small></td><td style="background:rgba(94,234,212,0.687)">311<small>76%</small></td><td style="background:rgba(94,234,212,0.123)">22<small>5%</small></td></tr><tr><th>neutral</th><td style="background:rgba(94,234,212,0.131)">40<small>6%</small></td><td style="background:rgba(94,234,212,0.094)">11<small>2%</small></td><td style="background:rgba(94,234,212,0.093)">10<small>2%</small></td><td style="background:rgba(94,234,212,0.117)">29<small>5%</small></td><td style="background:rgba(94,234,212,0.227)">115<small>18%</small></td><td style="background:rgba(94,234,212,0.092)">9<small>1%</small></td><td style="background:rgba(94,234,212,0.607)">412<small>66%</small></td></tr></table></div>
+<h2>Every class counts</h2><table><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr><tr><th>angry</th><td>51.2%</td><td>52.8%</td><td>52.0%</td><td>487</td></tr><tr><th>disgust</th><td>27.4%</td><td>83.6%</td><td>41.3%</td><td>55</td></tr><tr><th>fear</th><td>52.0%</td><td>14.7%</td><td>22.9%</td><td>525</td></tr><tr><th>happy</th><td>84.2%</td><td>80.6%</td><td>82.4%</td><td>878</td></tr><tr><th>sad</th><td>44.4%</td><td>50.6%</td><td>47.3%</td><td>591</td></tr><tr><th>surprise</th><td>68.2%</td><td>75.9%</td><td>71.8%</td><td>410</td></tr><tr><th>neutral</th><td>52.6%</td><td>65.8%</td><td>58.5%</td><td>626</td></tr></table>
+<h2>Confidence quality</h2><p>Expected calibration error: 0.014 (10 bins). Negative log-likelihood: 1.084. Raw probabilities are not calibrated; the app's uncertainty threshold is a display rule.</p>
+<h2>Reproducibility</h2><pre>{
+  &quot;protocol&quot;: &quot;Original FER2013 partitions recovered from ZIP filenames: train / PublicTest validation / PrivateTest final test&quot;,
+  &quot;seed&quot;: 2026,
+  &quot;fingerprint&quot;: &quot;4b0dc736306a8bb87878646ea1f124d2765c1e8adf5d0695a251bda742c331dd&quot;,
+  &quot;duplicate_policy&quot;: &quot;Exact decoded pixels deduplicated: test priority, then validation, then train. No near-duplicate or identity audit.&quot;,
+  &quot;duplicates_removed&quot;: {
+    &quot;test&quot;: 17,
+    &quot;validation&quot;: 69,
+    &quot;train&quot;: 1767
+  },
+  &quot;counts&quot;: {
+    &quot;test&quot;: 3572,
+    &quot;validation&quot;: 3520,
+    &quot;train&quot;: 26942
+  },
+  &quot;class_counts&quot;: {
+    &quot;test&quot;: [
+      487,
+      55,
+      525,
+      878,
+      591,
+      410,
+      626
+    ],
+    &quot;validation&quot;: [
+      459,
+      54,
+      488,
+      889,
+      649,
+      382,
+      599
+    ],
+    &quot;train&quot;: [
+      3790,
+      352,
+      3809,
+      7031,
+      4677,
+      2460,
+      4823
+    ]
+  }
+}</pre><p class="muted">Architecture, seed, environment, checkpoint digest and metrics are in metrics.json. Per-example test probabilities are in test-predictions.npz. Dataset images are not embedded in this report.</p></main></html>

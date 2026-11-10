@@ -1,0 +1,9 @@
+# Install in a fresh environment. CUDA wheels support the verified RTX 5070.
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+keras==3.15.1
+numpy==2.5.4
+mediapipe==1.2.2
+opencv-contrib-python==4.11.0.86
+pillow==13.0.0
+h5py==3.14.0

@@ -1,0 +1,369 @@
+{
+  "architecture": "Recovered capstone baseline",
+  "dataset": {
+    "protocol": "Original FER2013 partitions recovered from ZIP filenames: train / PublicTest validation / PrivateTest final test",
+    "seed": 2026,
+    "fingerprint": "4b0dc736306a8bb87878646ea1f124d2765c1e8adf5d0695a251bda742c331dd",
+    "duplicate_policy": "Exact decoded pixels deduplicated: test priority, then validation, then train. No near-duplicate or identity audit.",
+    "duplicates_removed": {
+      "test": 17,
+      "validation": 69,
+      "train": 1767
+    },
+    "counts": {
+      "test": 3572,
+      "validation": 3520,
+      "train": 26942
+    },
+    "class_counts": {
+      "test": [
+        487,
+        55,
+        525,
+        878,
+        591,
+        410,
+        626
+      ],
+      "validation": [
+        459,
+        54,
+        488,
+        889,
+        649,
+        382,
+        599
+      ],
+      "train": [
+        3790,
+        352,
+        3809,
+        7031,
+        4677,
+        2460,
+        4823
+      ]
+    }
+  },
+  "checkpoint_sha256": "869f55275072fa5e4523767ef912d48c82289570ab6f19c8f9a512a86ad6f2b8",
+  "labels": [
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "sad",
+    "surprise",
+    "neutral"
+  ],
+  "environment": {
+    "backend": "torch",
+    "version": "2.11.0+cu128",
+    "device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+    "cuda": "12.8"
+  },
+  "parameters": 2787015,
+  "note": "Historical weights: original training split provenance is unknown. These scores may be inflated by prior exposure to these images and are not a clean held-out benchmark. This is the model used by default in the app.",
+  "validation": {
+    "accuracy": 0.9289772727272727,
+    "macro_f1": 0.929062220933542,
+    "confusion_matrix": [
+      [
+        429,
+        0,
+        16,
+        1,
+        9,
+        2,
+        2
+      ],
+      [
+        1,
+        51,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        0,
+        453,
+        0,
+        12,
+        15,
+        4
+      ],
+      [
+        6,
+        0,
+        6,
+        858,
+        5,
+        3,
+        11
+      ],
+      [
+        18,
+        1,
+        14,
+        14,
+        595,
+        3,
+        4
+      ],
+      [
+        4,
+        0,
+        5,
+        5,
+        1,
+        367,
+        0
+      ],
+      [
+        19,
+        1,
+        22,
+        10,
+        22,
+        8,
+        517
+      ]
+    ],
+    "precision": [
+      0.8918918918918919,
+      0.9622641509433962,
+      0.8762088974854932,
+      0.9651293588301463,
+      0.9239130434782609,
+      0.9221105527638191,
+      0.9609665427509294
+    ],
+    "recall": [
+      0.934640522875817,
+      0.9444444444444444,
+      0.9282786885245902,
+      0.9651293588301463,
+      0.9167950693374423,
+      0.9607329842931938,
+      0.8631051752921536
+    ],
+    "f1": [
+      0.9127659574468084,
+      0.9532710280373832,
+      0.9014925373134328,
+      0.9651293588301463,
+      0.9203402938901778,
+      0.941025641025641,
+      0.909410729991205
+    ],
+    "support": [
+      459,
+      54,
+      488,
+      889,
+      649,
+      382,
+      599
+    ],
+    "nll": 0.34987309967045194,
+    "ece": 0.03290374330668287,
+    "calibration": [
+      {
+        "lower": 0.3,
+        "count": 2,
+        "accuracy": 0.5,
+        "confidence": 0.38240423798561096
+      },
+      {
+        "lower": 0.4,
+        "count": 25,
+        "accuracy": 0.28,
+        "confidence": 0.4636469423770905
+      },
+      {
+        "lower": 0.5,
+        "count": 64,
+        "accuracy": 0.421875,
+        "confidence": 0.5448192860931158
+      },
+      {
+        "lower": 0.6,
+        "count": 64,
+        "accuracy": 0.578125,
+        "confidence": 0.6516934083774686
+      },
+      {
+        "lower": 0.7,
+        "count": 95,
+        "accuracy": 0.7578947368421053,
+        "confidence": 0.7552144947804903
+      },
+      {
+        "lower": 0.8,
+        "count": 140,
+        "accuracy": 0.7642857142857142,
+        "confidence": 0.8554550954273769
+      },
+      {
+        "lower": 0.9,
+        "count": 3130,
+        "accuracy": 0.9645367412140575,
+        "confidence": 0.9918209784518416
+      }
+    ]
+  },
+  "test": {
+    "accuracy": 0.9280515117581187,
+    "macro_f1": 0.9220819088367543,
+    "confusion_matrix": [
+      [
+        450,
+        2,
+        14,
+        3,
+        9,
+        4,
+        5
+      ],
+      [
+        3,
+        49,
+        1,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        14,
+        1,
+        484,
+        3,
+        12,
+        6,
+        5
+      ],
+      [
+        6,
+        2,
+        11,
+        848,
+        5,
+        6,
+        0
+      ],
+      [
+        9,
+        0,
+        23,
+        8,
+        535,
+        4,
+        12
+      ],
+      [
+        2,
+        0,
+        5,
+        3,
+        1,
+        397,
+        2
+      ],
+      [
+        11,
+        0,
+        15,
+        14,
+        27,
+        7,
+        552
+      ]
+    ],
+    "precision": [
+      0.9090909090909091,
+      0.9074074074074074,
+      0.8752260397830018,
+      0.9647326507394767,
+      0.9052453468697124,
+      0.9363207547169812,
+      0.9583333333333334
+    ],
+    "recall": [
+      0.9240246406570842,
+      0.8909090909090909,
+      0.9219047619047619,
+      0.9658314350797267,
+      0.9052453468697124,
+      0.9682926829268292,
+      0.8817891373801917
+    ],
+    "f1": [
+      0.9164969450101833,
+      0.8990825688073394,
+      0.8979591836734693,
+      0.9652817302219693,
+      0.9052453468697125,
+      0.9520383693045563,
+      0.9184692179700499
+    ],
+    "support": [
+      487,
+      55,
+      525,
+      878,
+      591,
+      410,
+      626
+    ],
+    "nll": 0.3270783160945703,
+    "ece": 0.029711492217801852,
+    "calibration": [
+      {
+        "lower": 0.3,
+        "count": 12,
+        "accuracy": 0.16666666666666666,
+        "confidence": 0.36687854180733365
+      },
+      {
+        "lower": 0.4,
+        "count": 26,
+        "accuracy": 0.3076923076923077,
+        "confidence": 0.45351414611706364
+      },
+      {
+        "lower": 0.5,
+        "count": 68,
+        "accuracy": 0.39705882352941174,
+        "confidence": 0.5480620931176579
+      },
+      {
+        "lower": 0.6,
+        "count": 76,
+        "accuracy": 0.5394736842105263,
+        "confidence": 0.6480540358706525
+      },
+      {
+        "lower": 0.7,
+        "count": 91,
+        "accuracy": 0.7142857142857143,
+        "confidence": 0.7531012840323396
+      },
+      {
+        "lower": 0.8,
+        "count": 171,
+        "accuracy": 0.7894736842105263,
+        "confidence": 0.8589311458213985
+      },
+      {
+        "lower": 0.9,
+        "count": 3128,
+        "accuracy": 0.9709079283887468,
+        "confidence": 0.9920095166434413
+      }
+    ]
+  },
+  "epochs_completed": 0
+}

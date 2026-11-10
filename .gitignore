@@ -7,3 +7,12 @@ results/
 sample-local.png
 *.log
 .env
+data/
+experiments/
+build/
+dist/
+dist-final/
+*.spec
+!ExpressionLab.spec
+.idea/
+docs/deepdream.gif

@@ -28,3 +28,15 @@ The initial group-photo skeleton is a qualitative failure; successful execution 
 The Python process launched through the assistant execution environment could not open camera indices 0-2 through DirectShow or Media Foundation. Windows Camera displayed a live feed. After the user ran launch_camera.cmd from the normal Windows desktop, the user confirmed the live camera window opened; its application window was also observed in the desktop inventory. The assistant did not inspect the live model overlay before that window closed. Camera-frame acquisition/display is user-confirmed; model accuracy on that feed is not verified.
 
 Added explicit backend fallback, first-frame validation, cleanup on failed attempts, and a desktop launcher. 20 unit tests pass, including mocked camera-backend fallback and all-backend failure cleanup. No camera recording was saved by the launcher.
+
+## Desktop, visualization, GPU and evaluation work
+
+- 34 fast tests pass, covering original live controls, source switching, crop capture, RGB/BGR conversion, metrics orientation, dataset deduplication, and report-to-model checksum matching.
+- GPU verified: PyTorch 2.11.0+cu128, Keras 3.15.1, RTX 5070 Laptop GPU. CUDA matrix multiplication, expression inference, activation maps, and DeepDream gradients passed.
+- CPU/GPU recovered-model comparison: eight deterministic inputs, maximum probability difference 1.55e-6, all predicted labels identical with TF32 disabled. This is numerical compatibility, not an accuracy benchmark.
+- Source smoke test passed for model loading, Tk initialization, visualization generation, and MediaPipe blank-image inference. The GPU-capable app continues to run pose estimation on CPU.
+- Compact candidate: saved best validation-loss checkpoint from an interrupted 27/30-epoch run. Validation accuracy 56.36%, macro F1 50.40%; test accuracy 59.07%, macro F1 53.72%. The test partition has 3,572 images after exact-pixel deduplication. No claim of live-camera accuracy or superiority to the historical model.
+- Spatial candidate failed to learn reliably; it is not the recommended checkpoint.
+- Recovered baseline evaluation: 92.81% accuracy, 92.21% macro F1 on this test partition, **not a verified held-out result** because its original training provenance is unknown. Its bundled report states this caveat explicitly.
+- The app defaults to the recovered baseline. Results are attached to model hashes; missing or mismatched reports produce an explanation instead of a file picker or unrelated metrics.
+- The consumer UI has no training controls. Internal layer names are replaced with explained depth choices; iteration counts live behind explained processing presets. Feature maps and Dream default to grayscale. Added Dream colors are explicitly optional artistic mapping.

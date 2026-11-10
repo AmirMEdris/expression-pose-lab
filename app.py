@@ -5,6 +5,8 @@ import math
 import os
 from pathlib import Path
 import time
+from backend import select_backend
+select_backend()
 
 os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '2')
 import cv2
@@ -43,6 +45,9 @@ def main():
     source.add_argument('--image', type=Path)
     source.add_argument('--video', type=Path)
     source.add_argument('--camera', type=int)
+    source.add_argument('--screen', action='store_true', help='Start interactive screen capture; A switches to camera')
+    parser.add_argument('--screen-region', type=int, nargs=4, metavar=('LEFT','TOP','WIDTH','HEIGHT'))
+    parser.add_argument('--capture-dir',type=Path,default=Path('results/captures'))
     parser.add_argument('--output', type=Path, help='PNG/JPG for images, MP4 for video; also saves JSON/JSONL')
     parser.add_argument('--pose-only', action='store_true')
     parser.add_argument('--pose-model', choices=('lite','full','heavy'), default='lite')
@@ -53,6 +58,8 @@ def main():
     parser.add_argument('--max-frames', type=int, default=0, help='0 means unlimited')
     parser.add_argument('--show', action='store_true', help='Display window; press Q or Esc to exit')
     args = parser.parse_args()
+    if args.screen_region and (args.screen_region[2]<=0 or args.screen_region[3]<=0):
+        parser.error('Screen region width and height must be positive')
     if args.max_people < 1 or args.max_frames < 0 or not 0 <= args.expression_threshold <= 1 or not 0 <= args.landmark_threshold <= 1:
         parser.error('Invalid people, frame limit, or threshold value')
     video_mode = args.image is None
@@ -66,6 +73,10 @@ def main():
         parser.error(f'Model files missing. Run: python download_models.py --pose-model {args.pose_model}')
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
+    if args.camera is not None or args.screen:
+        from live import run_live
+        run_live(args,ROOT)
+        return
     pose = PoseEstimator(needed[0], video=video_mode, max_people=args.max_people)
     capture = writer = stream = None
     try:

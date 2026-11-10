@@ -1,0 +1,45 @@
+"""Exercise the actual background workers without using a camera or recording it."""
+from pathlib import Path
+import argparse
+import json
+import queue
+import time
+from backend import select_backend
+select_backend()
+from runtime import Engine
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('image');p.add_argument('--output',type=Path,required=True);args=p.parse_args()
+    root=Path(__file__).parent;engine=Engine(root,root/'results/captures');result={}
+    def wait(q,predicate=lambda packet:True):
+        end=time.monotonic()+90
+        while time.monotonic()<end:
+            while not engine.events.empty():
+                kind,value=engine.events.get_nowait()
+                if kind=='error':raise RuntimeError(value)
+            try:
+                packet=q.get(timeout=.2)
+                if predicate(packet):return packet
+            except queue.Empty:pass
+        raise TimeoutError('Background worker did not produce output')
+    try:
+        engine.configure(predictions=True,visual='Activations');engine.switch('Image',image=args.image)
+        frame=wait(engine.frames);features=wait(engine.visuals)
+        result.update(faces=len(frame['faces']),source=frame['source'],feature_shape=list(features['image'].shape))
+        engine.configure(visual='DeepDream',colorful=False)
+        dream=wait(engine.visuals,lambda p:p['mode']=='DeepDream')
+        import numpy as np
+        assert np.array_equal(dream['image'][:,:,0],dream['image'][:,:,1])
+        assert np.array_equal(dream['image'][:,:,1],dream['image'][:,:,2])
+        result.update(dream_shape=list(dream['image'].shape),dream_seconds=dream['seconds'],grayscale=True)
+        assert engine.frames.qsize()<=1 and engine.visuals.qsize()<=1
+        result['status']='passed'
+    finally:
+        engine.close();engine.worker.join(10);engine.dream_worker.join(10)
+        assert not engine.worker.is_alive() and not engine.dream_worker.is_alive()
+    args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,indent=2),encoding='utf-8')
+    print(json.dumps(result),flush=True)
+
+
+if __name__=='__main__':main()
