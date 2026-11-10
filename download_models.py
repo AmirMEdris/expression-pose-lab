@@ -1,5 +1,6 @@
 """Fetch pinned model artifacts; verify checksums before installing them."""
 import hashlib
+import argparse
 from pathlib import Path
 import urllib.request
 
@@ -11,6 +12,12 @@ ASSETS = {
     'pose_landmarker_lite.task': (
         'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
         '59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a'),
+    'pose_landmarker_full.task': (
+        'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
+        '5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1'),
+    'pose_landmarker_heavy.task': (
+        'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task',
+        '64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b'),
 }
 
 
@@ -20,8 +27,13 @@ def checksum(path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--pose-model', choices=('lite','full','heavy','all'), default='lite')
+    args = parser.parse_args()
     ROOT.mkdir(exist_ok=True)
     for name, (url, expected) in ASSETS.items():
+        if name != 'expression-baseline.h5' and args.pose_model != 'all' and name != f'pose_landmarker_{args.pose_model}.task':
+            continue
         target = ROOT / name
         if target.exists() and checksum(target) == expected:
             print(f'Verified {name}')

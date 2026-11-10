@@ -18,3 +18,7 @@ Sample sources (downloaded only for local validation, not committed):
 Not yet verified: live webcam capture, moving-person tracking, multi-person pose accuracy, model accuracy/calibration, training, other operating systems. A maximum-person setting does not guarantee all people will be detected. Crowded and partially visible bodies remain a known limitation.
 
 The original tf_pose implementation was replaced; it was not restored or tested. The expression model remains the recovered early baseline, not FinalModel.
+
+## Follow-up: pose quality review
+
+The initial group-photo skeleton is a qualitative failure; successful execution did not establish correct alignment. See POSE_COMPARISON.md for the lite/full/heavy comparison and actual moving-footage test. The updated default withholds incomplete bodies, with explicit diagnostic access to raw estimates. The test suite now contains 18 passing unit tests.

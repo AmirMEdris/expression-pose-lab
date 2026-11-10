@@ -44,6 +44,21 @@ Camera capture is never started by importing modules or installing the project. 
 - Kept raw class probabilities and pose visibility/presence in machine-readable output.
 - Added resource cleanup and actionable input/model errors.
 
+## Pose display and model comparison
+
+The default display now withholds a skeleton unless all 12 major joints (shoulders, elbows, wrists, hips, knees, ankles) are inside the image and meet the visibility/presence threshold. This deliberately favors full-body input. Cropped or occluded people may be omitted even when some joints are accurate.
+
+This is a **coverage check, not proof of correct alignment**. Wrong but confident skeletons can still pass. Raw landmarks remain in JSON under `poses`; `pose_quality` explains which estimates were withheld. The image footer reports withheld estimates. Use `--show-partial-poses` only to inspect raw, potentially wrong estimates.
+
+```powershell
+# Download the optional stronger models
+.\.venv\Scripts\python.exe download_models.py --pose-model all
+.\.venv\Scripts\python.exe app.py --image photo.jpg --pose-only --pose-model full
+.\.venv\Scripts\python.exe app.py --video input.mp4 --pose-only --pose-model heavy --output results\heavy.mp4
+```
+
+`--landmark-threshold` adjusts the coverage threshold (default 0.5). Lite remains the default: full and heavy did not fix the crowded group-photo failure. All three performed better on an isolated person in the inspected samples. See `POSE_COMPARISON.md` for evidence and limitations.
+
 ## Model provenance and limits
 
 Expression weights come from `model_filter.h5` in original commit `514316f2e5dce38a0e8ab35b50807f44fc57a2a4`. This is an early baseline, **not the missing FinalModel**. The original README credits the baseline architecture to Ashadullah Shawon. We have not retrained it or established new accuracy results.
