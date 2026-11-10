@@ -35,7 +35,26 @@ The default view gives the input the available space. The neural panel appears o
 
 The stronger held-frame mode uses the same expression-model weights, a mean-response objective balanced across three late layers, and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. It fixes gradient normalization and clips pixels into the valid range; it does not reproduce the original notebook’s unchecked pixel conversion. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction.
 
-### What is trained—and what is not
+### Explore individual filters
+
+**Explore filters** opens a local report for the loaded expression model, checking both the checkpoint hash and report hash. It shows six strongest dataset examples per filter, full-image context and structural support boxes, lower-response controls matched in global brightness/contrast, and single-unit Dreams from three seeds. The general live Dream remains an artistic layer-wide visualization; the explorer provides measured, filter-specific evidence.
+
+The recovered model analysis scans 896 convolution channels over 3,520 deduplicated FER2013 validation images. The new residual model analysis covers 1,248 channels on the same images. A Dream is marked as an increase only after re-evaluating the exact exported 8-bit pixels at the fixed target unit. Failed or negligible increases remain visible. Examples are ranked per image, with one peak region per distinct decoded image; near-duplicates may remain.
+
+This establishes measured responses, not automatic semantic labels. Some filters respond to eyes and eyebrows, mouths, lighting or borders; dataset graphics and poor-quality inputs can also activate them. Late receptive fields often cover much of the face. A support box is not an attention map, and higher activation is not improved expression accuracy. Convolution outputs include any built-in activation; separate following normalization/activation layers are not included. Comparing raw values across models or filters is inappropriate.
+
+Generate a report locally with the PyTorch environment:
+
+```powershell
+python filter_explorer.py models\expression-baseline.h5 data\fer2013.zip --output models\expression-baseline.filters.html
+python filter_explorer.py experiments\my-run\best.keras data\fer2013.zip --output experiments\my-run\best.filters.html
+```
+
+Keep the `.filters.html` and `.filters.json` beside their matching model to attach the report. The adjacent `.filters.evidence.json` and `.filters.npz` retain numeric evidence and original/exported pixels for audit. Reports embed dataset images, are ignored by Git, and are not included in public source builds. The local installed app can carry separately generated reports; no automatic dataset download or camera recording is involved.
+
+The procedure combines [dataset examples with feature optimization](https://distill.pub/2017/feature-visualization/) in a [filter exploration interface](https://distill.pub/2018/building-blocks/). Human annotations and controlled semantic interventions would be needed to substantiate a label such as “eye detector.”
+
+### Expression model results
 
 The app still defaults to the **recovered historical baseline**, not the missing final capstone model. The new residual candidate completed 50 epochs and scored **62.15% test accuracy and 58.36% macro F1**, improving over the compact candidate below on the same deduplicated FER2013 partition. It has 1,773,735 parameters versus the recovered baseline’s 2,787,015 (about 36% fewer). Its checkpoint was selected by validation loss. This is a comparison with the compact experiment, not proof of superiority to the lost FinalModel or a live-camera benchmark. A new compact candidate was trained from scratch, but its run stopped after 27 of 30 requested epochs. Evaluation of its saved best validation-loss checkpoint produced **59.1% test accuracy and 53.7% macro F1** on 3,572 deduplicated FER2013 test images. This is a development candidate, not a demonstrated improvement or a production-quality claim.
 

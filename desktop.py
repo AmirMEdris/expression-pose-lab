@@ -215,7 +215,12 @@ def main():
             webbrowser.open(path.resolve().as_uri())
         else:
             messagebox.showinfo('No results for this model','This model has no verified evaluation report attached. The app will not substitute another model\'s scores. Imported models can include matching .metrics.json and .report.html files.')
-    for caption,callback in [('Import model',import_model),('Original model',use_baseline),('Model results',open_report)]:
+    def open_filters():
+        from model_results import find_filter_report
+        path,metadata=find_filter_report(active_model)
+        if path:webbrowser.open(path.resolve().as_uri())
+        else:messagebox.showinfo('Filter analysis unavailable','No verified filter analysis is attached to the loaded model. Analysis must be generated for these exact weights; another model’s examples would be misleading.')
+    for caption,callback in [('Import model',import_model),('Original model',use_baseline),('Model results',open_report),('Explore filters',open_filters)]:
         ttk.Button(actions,text=caption,command=callback).pack(side='left',padx=3)
     help_text='A  camera / screen     P  predictions     E  pose     I  help     F  FPS     Space  save faces     D  visualization     Esc  quit'
     help_label=label(root,help_text,9,muted);help_label.pack(fill='x',padx=26,pady=(12,0))

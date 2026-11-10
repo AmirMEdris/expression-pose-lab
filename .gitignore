@@ -16,3 +16,7 @@ dist-final/
 !ExpressionLab.spec
 .idea/
 docs/deepdream.gif
+*.filters.html
+*.filters.json
+*.filters.evidence.json
+*.filters.npz
