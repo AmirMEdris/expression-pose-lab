@@ -22,22 +22,27 @@ The default view gives the input the available space. The neural panel appears o
 | Live view | Your input with optional expression and pose overlays. |
 | Feature maps | Responses from 16 filters. Brighter means stronger response **within that tile**. Each tile has its own scale; these are not class probabilities or an explanation of a prediction. |
 | Dream | Multiscale gradient ascent through the loaded expression model’s convolutional features. The same weights operate on a larger image; classification still uses 48×48 faces. |
+| Dream target | **One filter** uses the exact Layer and Filter ID you choose. Numbering matches Explore filters: layers start at 1, filters at 0. **Mixed features** restores the broader effect. |
 | Develop this frame | Default Dream behavior. Holds one frame while 362 updates build large structures, then finer detail. Click again to start a new dream from the current input. |
 | Follow live input | Faster, lighter effect that follows changing camera or screen content. It trades accumulated transformation for motion. |
 | Dream area | Whole frame (default) or Face only. Face only uses the largest detected face, falling back to the whole frame when none is found. |
 | Expand artwork | Gives the artwork the full available viewport instead of showing it beside the live input. Screen input plus Whole frame processes your screen scene. |
 | Dream intensity | How far pixels change during each update. More is not more accurate. |
-| Pattern depth, in View settings | For Follow live input: Fine detail / Shapes / Abstract select early / middle / late convolution layers. Develop this frame combines the three deepest convolution layers. |
+| Pattern depth, in View settings | Applies to Mixed features + Follow live input: Fine detail / Shapes / Abstract select early / middle / late layers. Mixed features + Develop combines the three deepest layers. One filter always uses your exact selection. |
 | Dream processing, in View settings | Quick / Balanced / Detailed perform 1 / 3 / 6 pixel-update steps per refresh. More steps take more time; they **do not retrain the model**. |
 | Preserve input colors | Your model changes luminance; original chroma is preserved. The classifier still sees grayscale. |
 | Explain prediction | Grad-CAM for the largest detected face using the loaded classifier. Choose a class; warm areas show relative positive support, not certainty. |
 | Dream resolution, in View settings | Quick / Balanced / Detailed cap the longest edge at 256 / 384 / 512 pixels without stretching. CPU is capped at 256. |
 
-The stronger held-frame mode uses the same expression-model weights, a mean-response objective balanced across three late layers, and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. It fixes gradient normalization and clips pixels into the valid range; it does not reproduce the original notebook’s unchecked pixel conversion. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction.
+To follow a filter you found in the explorer, choose **Dream → One filter → Layer 4 → Filter 35**, then **Develop this frame**. This is the initial selection for the bundled recovered model. **Follow live input** applies the same selected target to changing camera/screen content. Changing the filter starts fresh; importing a different model resets to its first layer and filter because IDs do not carry the same meaning between models.
+
+One filter maximizes that channel’s **mean response across spatial positions**. Other channels still participate in the forward network, but their responses are not added to the objective. The caption re-evaluates the actual displayed image and shows the selected channel’s before/after mean at that preview size. This is different from the explorer’s fixed-unit score. Jitter, resizing, color restoration, and pixel clipping mean the displayed score is not guaranteed to increase at every update; the caption reports the actual result.
+
+The stronger held-frame mode uses the same expression-model weights and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. Mixed features balances the mean responses of three late layers; One filter targets only the chosen channel. It fixes gradient normalization and clips pixels into the valid range; it does not reproduce the original notebook’s unchecked pixel conversion. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction.
 
 ### Explore individual filters
 
-**Explore filters** opens a local report for the loaded expression model, checking both the checkpoint hash and report hash. It shows six strongest dataset examples per filter, full-image context and structural support boxes, lower-response controls matched in global brightness/contrast, and single-unit Dreams from three seeds. The general live Dream remains an artistic layer-wide visualization; the explorer provides measured, filter-specific evidence.
+**Explore filters** opens a local report for the loaded expression model, checking both the checkpoint hash and report hash. It shows six strongest dataset examples per filter, full-image context and structural support boxes, lower-response controls matched in global brightness/contrast, and single-unit Dreams from three seeds. Use the same layer/filter numbers in the live app’s One filter mode to explore that channel on your own input.
 
 The recovered model analysis scans 896 convolution channels over 3,520 deduplicated FER2013 validation images. The new residual model analysis covers 1,248 channels on the same images. A Dream is marked as an increase only after re-evaluating the exact exported 8-bit pixels at the fixed target unit. Failed or negligible increases remain visible. Examples are ranked per image, with one peak region per distinct decoded image; near-duplicates may remain.
 

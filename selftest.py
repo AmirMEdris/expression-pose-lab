@@ -62,6 +62,37 @@ def run(root,output):
         dream.reset()
         assert dream.development is None
         result['DevelopDream']=dict(status='passed',held_frame=True,reset=True)
+        # Opposing channels make accidental channel mixing observable: filter 0
+        # must brighten the input; filter 1 must darken it, even when negative.
+        import keras
+        inputs=keras.Input((48,48,1))
+        conv=keras.layers.Conv2D(2,1,use_bias=False,name='opposed_filters')
+        probe=keras.Model(inputs,conv(inputs))
+        conv.set_weights([np.array([1.,-1.],np.float32).reshape(1,1,1,2)])
+        neutral=np.full((48,48,3),128,np.uint8)
+        for channel in (0,1):
+            isolated=ModelDream(probe)
+            bright=isolated.render(neutral,'opposed_filters',channel=channel,steps=1,animate=False,preserve_color=False)
+            assert (bright.mean()>128) if channel==0 else (bright.mean()<128)
+            assert isolated.measurement['after']>isolated.measurement['before']
+            developed,_=isolated.render_developed(neutral,layer='opposed_filters',channel=channel,steps=1,preserve_color=False)
+            assert (developed.mean()>128) if channel==0 else (developed.mean()<128)
+        np.testing.assert_array_equal(conv.get_weights()[0].reshape(-1),[1.,-1.])
+        # Exercise a real model target and switching, including exact displayed
+        # image measurement and held-frame reset rather than residual feedback.
+        target=visualizer.layers[3]
+        single=dream.render(rgb,target,channel=35,steps=3,long_edge=256,animate=False)
+        assert single.shape==rgb.shape and dream.measurement['channel']==35
+        assert np.isfinite([dream.measurement['before'],dream.measurement['after']]).all()
+        cv2.imwrite(str(output/'single-filter-dream.png'),single)
+        dream.render_developed(rgb,layer=target,channel=35,steps=2,long_edge=256)
+        dream.render_developed(np.zeros_like(rgb),layer=target,channel=35,steps=2,long_edge=256)
+        assert dream.development['total']==4
+        dream.render_developed(np.zeros_like(rgb),layer=target,channel=36,steps=2,long_edge=256)
+        assert dream.development['total']==2 and not dream.development['original'].any()
+        assert dream.measurement['channel']==36
+        np.testing.assert_allclose(predict_numpy(estimator.model,check),probabilities,atol=1e-6)
+        result['SingleFilterDream']=dict(status='passed',opposing_channel_gradients=True,target_switch_reset=True,model_unchanged=True)
         from pose import PoseEstimator
         pose=PoseEstimator(root/'models/pose_landmarker_lite.task')
         try:result['blank_pose_count']=len(pose.detect(np.zeros((256,256,3),np.uint8)))

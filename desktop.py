@@ -46,7 +46,7 @@ def main():
     style.map('TCombobox',fieldbackground=[('readonly','#1e2b43')],foreground=[('readonly',text)])
     style.configure('TScale',background=panel,troughcolor='#293548')
     engine=Engine(resource_root(),output_root()/'captures')
-    current_source='Stopped';last_frame=None;last_visual=None;photos={};layer_names=[]
+    current_source='Stopped';last_frame=None;last_visual=None;photos={};layer_names=[];filter_catalog=[];catalog_model=None
     active_model=resource_root()/'models/expression-baseline.h5'
     variables={name:tk.BooleanVar(value=value) for name,value in [('predictions',False),('pose',False),('help',True),('fps',True)]}
     visual=tk.StringVar(value='Off');visual_choice=tk.StringVar(value='Live view');layer=tk.StringVar(value='Shapes');camera=tk.StringVar(value='0');region=tk.StringVar();strength=tk.DoubleVar(value=.025);steps=tk.StringVar(value='Detailed');threshold=tk.DoubleVar(value=.6)
@@ -74,17 +74,28 @@ def main():
         label(sidebar,title,10,mint).pack(anchor='w',padx=16,pady=(15,5))
     colorful=tk.BooleanVar(value=True)
     dream_motion=tk.StringVar(value='Develop');dream_revision=tk.IntVar(value=0)
+    dream_target=tk.StringVar(value='One filter');exact_layer=tk.StringVar();exact_filter=tk.StringVar()
     explain_target=tk.StringVar(value='Top prediction');dream_engine=tk.StringVar(value='Expression');dream_scope=tk.StringVar(value='Whole frame');dream_quality=tk.StringVar(value='Balanced');focus_art=tk.BooleanVar(value=False)
     def selected_layer():
         if not layer_names:return ''
         return layer_names[{'Fine detail':0,'Shapes':len(layer_names)//2,'Abstract':len(layer_names)-1}[layer.get()]]
+    def selected_filter():
+        if not filter_catalog or catalog_model!=str(active_model):return '',0
+        from dream_selection import resolve_filter
+        return resolve_filter(filter_catalog,exact_layer_control.current()+1,int(exact_filter.get()))
+    def refresh_filters():
+        if not filter_catalog:return
+        index=max(0,exact_layer_control.current());count=filter_catalog[index]['channels']
+        exact_filter_control['values']=[str(i) for i in range(count)]
+        if not exact_filter.get().isdigit() or not 0<=int(exact_filter.get())<count:exact_filter.set('0')
+        configure()
     def choose_visual():
         visual.set({'Live view':'Off','Dream':'DeepDream','Feature maps':'Activations','Explain prediction':'GradCAM'}[visual_choice.get()]);configure()
     def configure():
         nonlocal last_visual
         last_visual=None
         visual_choice.set({'Off':'Live view','DeepDream':'Dream','Activations':'Feature maps','GradCAM':'Explain prediction'}[visual.get()])
-        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get(),dream_engine=dream_engine.get(),dream_scope=dream_scope.get(),dream_depth=layer.get(),dream_resolution={'Quick':256,'Balanced':384,'Detailed':512}[dream_quality.get()],explain_target=explain_target.get(),dream_motion=dream_motion.get(),dream_revision=dream_revision.get())
+        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get(),dream_engine=dream_engine.get(),dream_scope=dream_scope.get(),dream_depth=layer.get(),dream_resolution={'Quick':256,'Balanced':384,'Detailed':512}[dream_quality.get()],explain_target=explain_target.get(),dream_motion=dream_motion.get(),dream_revision=dream_revision.get(),dream_target=dream_target.get(),dream_layer=selected_filter()[0],dream_filter=selected_filter()[1],dream_target_model=str(active_model))
         live_canvas.master.grid();views.columnconfigure(0,weight=3)
         if visual.get()=='Off':
             visual_text.set('Visualization paused');vis_canvas.master.grid_remove()
@@ -98,6 +109,8 @@ def main():
         if visual.get()=='GradCAM':explain_box.pack(fill='x',before=settings_button,pady=5);visual_text.set('Explaining the largest detected face with the loaded expression model.')
         strength_box.pack_forget()
         if visual.get()=='DeepDream':strength_box.pack(fill='x',before=settings_button,pady=5)
+        if dream_target.get()=='One filter':filter_box.pack(fill='x',before=develop_button,pady=4)
+        else:filter_box.pack_forget()
     def parse_source():
         index=int(camera.get())
         if index<0:raise ValueError('Camera index must be zero or greater')
@@ -132,7 +145,15 @@ def main():
         dream_motion.set('Develop');dream_revision.set(dream_revision.get()+1);configure()
     def follow_input():
         dream_motion.set('Live');configure()
-    ttk.Button(strength_box,text='Develop this frame',command=develop_frame,style='Accent.TButton').pack(fill='x',padx=16,pady=3)
+    label(strength_box,'Dream target',9,muted).pack(anchor='w',padx=16,pady=(6,0))
+    target_picker=ttk.Combobox(strength_box,textvariable=dream_target,values=['One filter','Mixed features'],state='readonly');target_picker.pack(fill='x',padx=16,pady=3);target_picker.bind('<<ComboboxSelected>>',lambda e:configure())
+    filter_box=tk.Frame(strength_box,bg=panel)
+    label(filter_box,'Layer (same numbering as Explorer)',9,muted).pack(anchor='w',padx=16)
+    exact_layer_control=ttk.Combobox(filter_box,textvariable=exact_layer,state='disabled');exact_layer_control.pack(fill='x',padx=16,pady=3);exact_layer_control.bind('<<ComboboxSelected>>',lambda e:refresh_filters())
+    label(filter_box,'Filter ID (starts at 0)',9,muted).pack(anchor='w',padx=16)
+    exact_filter_control=ttk.Combobox(filter_box,textvariable=exact_filter,state='disabled');exact_filter_control.pack(fill='x',padx=16,pady=3);exact_filter_control.bind('<<ComboboxSelected>>',lambda e:configure())
+    label(filter_box,'Choose an input to load the model. Changing the target starts a new dream.',9,muted,wraplength=220,justify='left').pack(anchor='w',padx=16,pady=4)
+    develop_button=ttk.Button(strength_box,text='Develop this frame',command=develop_frame,style='Accent.TButton');develop_button.pack(fill='x',padx=16,pady=3)
     ttk.Button(strength_box,text='Follow live input',command=follow_input).pack(fill='x',padx=16,pady=3)
     label(strength_box,'Develop holds one frame and builds the dream over time.',9,muted,wraplength=220,justify='left').pack(anchor='w',padx=16,pady=4)
     label(strength_box,'Dream area',9,muted).pack(anchor='w',padx=16,pady=(5,0))
@@ -148,7 +169,7 @@ def main():
             control=ttk.Combobox(window,textvariable=var,values=values,state='readonly');control.pack(anchor='w',padx=24)
             control.bind('<<ComboboxSelected>>',lambda e:configure())
             label(window,explanation,9,muted,wraplength=510,justify='left').pack(anchor='w',padx=24,pady=4)
-        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'For Follow live input only. Develop this frame combines the three deepest convolution layers.')
+        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'For Mixed features + Follow live input only. One filter uses the exact selection in the sidebar.')
         choice('Dream resolution',dream_quality,['Quick','Balanced','Detailed'],'256, 384, or 512 pixels on the longest edge, preserving shape. Higher detail costs more GPU time; CPU is capped at 256.')
         choice('Dream processing',steps,['Quick','Balanced','Detailed'],'1, 3, or 6 pixel-update steps per refresh. More steps change the image further but can slow updates. This does not train the model.')
         ttk.Checkbutton(window,text='Preserve input colors in Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)
@@ -249,13 +270,23 @@ def main():
         finish()
     root.protocol('WM_DELETE_WINDOW',close)
     def poll():
-        nonlocal current_source,last_frame,last_visual,active_model,layer_names
+        nonlocal current_source,last_frame,last_visual,active_model,layer_names,filter_catalog,catalog_model
         if closing:return
         try:
             while True:
                 kind,value=engine.events.get_nowait()
                 if kind=='layers':
                     layer_names=value;configure()
+                elif kind=='filter_catalog':
+                    filter_catalog=value
+                    exact_layer_control['values']=[f"Layer {i+1} · {v['channels']} filters" for i,v in enumerate(value)]
+                    exact_layer_control['state']='readonly';exact_filter_control['state']='readonly'
+                    if catalog_model!=str(active_model):
+                        is_original=active_model.resolve()==(resource_root()/'models/expression-baseline.h5').resolve()
+                        index=3 if is_original and len(value)>3 and value[3]['channels']>35 else 0
+                        exact_layer_control.current(index);exact_filter.set('35' if index==3 and is_original else '0')
+                        catalog_model=str(active_model)
+                    refresh_filters()
                 elif kind=='model':
                     active_model=Path(value);model_text.set('Original capstone baseline' if active_model.suffix=='.h5' else 'Imported model: '+active_model.name)
                 elif kind=='device':device_text.set(value)
