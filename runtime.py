@@ -30,8 +30,8 @@ class Settings:
     pose: bool = False
     visual: str = 'Off'
     layer: str = ''
-    strength: float = .015
-    steps: int = 3
+    strength: float = .025
+    steps: int = 6
     threshold: float = .6
     colorful: bool = False
     dream_engine: str = 'Expression'
@@ -39,6 +39,8 @@ class Settings:
     dream_depth: str = 'Shapes'
     dream_resolution: int = 384
     explain_target: str = 'Top prediction'
+    dream_motion: str = 'Develop'
+    dream_revision: int = 0
 
 
 class Engine:
@@ -170,7 +172,7 @@ class Engine:
             except queue.Empty:continue
             if self.snapshot().visual=='Off' or generation!=self.generation:continue
             try:
-                key=(generation,s.dream_scope,s.dream_engine,s.dream_depth,s.dream_resolution,s.layer)
+                key=(generation,s.dream_scope,s.dream_engine,s.dream_depth,s.dream_resolution,s.layer,s.visual,s.dream_motion,s.dream_revision)
                 if key!=previous_key:
                     visualizer.previous=None
                     if rgb_dream is not None:rgb_dream.reset()
@@ -190,8 +192,11 @@ class Engine:
                     if dream_model is not visualizer.model:
                         from model_dream import ModelDream
                         rgb_dream=ModelDream(visualizer.model);dream_model=visualizer.model
-                    rendered=rgb_dream.render(frame,layer,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful)
-                    caption='Your expression model drives this Dream. '+('Source colors preserved; the model still sees grayscale.' if s.colorful else 'Grayscale feature amplification.')
+                    if s.dream_motion=='Develop':
+                        rendered,caption=rgb_dream.render_developed(frame,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful)
+                    else:
+                        rendered=rgb_dream.render(frame,layer,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful)
+                        caption='Following live input · lighter effect. Use Develop this frame for a longer transformation.'
                 else:rendered=visualizer.render(frame,layer,s.visual,s.strength,s.steps,colorful=s.colorful)
                 if generation==self.generation:
                     latest(self.visuals,dict(image=rendered,seconds=time.monotonic()-start,mode=s.visual,layer=layer,generation=generation,engine=s.dream_engine,scope=s.dream_scope,settings=s,caption=caption))

@@ -54,6 +54,14 @@ def run(root,output):
         assert np.abs(art.astype(float)-rgb).mean()>1
         cv2.imwrite(str(output/'color-dream.png'),art)
         result['ModelDream']=dict(status='passed',seconds=time.monotonic()-before,shape=list(art.shape))
+        developed,caption=dream.render_developed(rgb,steps=6,long_edge=256)
+        held=dream.development['gray'].copy()
+        dream.render_developed(np.zeros_like(rgb),steps=6,long_edge=256)
+        np.testing.assert_array_equal(dream.development['gray'],held)
+        assert dream.development['total']==12 and developed.shape==rgb.shape
+        dream.reset()
+        assert dream.development is None
+        result['DevelopDream']=dict(status='passed',held_frame=True,reset=True)
         from pose import PoseEstimator
         pose=PoseEstimator(root/'models/pose_landmarker_lite.task')
         try:result['blank_pose_count']=len(pose.detect(np.zeros((256,256,3),np.uint8)))

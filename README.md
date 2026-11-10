@@ -22,14 +22,18 @@ The default view gives the input the available space. The neural panel appears o
 | Live view | Your input with optional expression and pose overlays. |
 | Feature maps | Responses from 16 filters. Brighter means stronger response **within that tile**. Each tile has its own scale; these are not class probabilities or an explanation of a prediction. |
 | Dream | Multiscale gradient ascent through the loaded expression model’s convolutional features. The same weights operate on a larger image; classification still uses 48×48 faces. |
+| Develop this frame | Default Dream behavior. Holds one frame while 362 updates build large structures, then finer detail. Click again to start a new dream from the current input. |
+| Follow live input | Faster, lighter effect that follows changing camera or screen content. It trades accumulated transformation for motion. |
 | Dream area | Whole frame (default) or Face only. Face only uses the largest detected face, falling back to the whole frame when none is found. |
 | Expand artwork | Gives the artwork the full available viewport instead of showing it beside the live input. Screen input plus Whole frame processes your screen scene. |
 | Dream intensity | How far pixels change during each update. More is not more accurate. |
-| Pattern depth, in View settings | Fine detail / Shapes / Abstract select early / middle / late convolution layers. These are navigation labels, not claims about a layer's exact semantic meaning. |
+| Pattern depth, in View settings | For Follow live input: Fine detail / Shapes / Abstract select early / middle / late convolution layers. Develop this frame combines the three deepest convolution layers. |
 | Dream processing, in View settings | Quick / Balanced / Detailed perform 1 / 3 / 6 pixel-update steps per refresh. More steps take more time; they **do not retrain the model**. |
 | Preserve input colors | Your model changes luminance; original chroma is preserved. The classifier still sees grayscale. |
 | Explain prediction | Grad-CAM for the largest detected face using the loaded classifier. Choose a class; warm areas show relative positive support, not certainty. |
 | Dream resolution, in View settings | Quick / Balanced / Detailed cap the longest edge at 256 / 384 / 512 pixels without stretching. CPU is capped at 256. |
+
+The stronger held-frame mode uses the same expression-model weights, a mean-response objective balanced across three late layers, and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. It fixes gradient normalization and clips pixels into the valid range; it does not reproduce the original notebook’s unchecked pixel conversion. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction.
 
 ### What is trained—and what is not
 

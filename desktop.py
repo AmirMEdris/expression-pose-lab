@@ -49,7 +49,7 @@ def main():
     current_source='Stopped';last_frame=None;last_visual=None;photos={};layer_names=[]
     active_model=resource_root()/'models/expression-baseline.h5'
     variables={name:tk.BooleanVar(value=value) for name,value in [('predictions',False),('pose',False),('help',True),('fps',True)]}
-    visual=tk.StringVar(value='Off');visual_choice=tk.StringVar(value='Live view');layer=tk.StringVar(value='Shapes');camera=tk.StringVar(value='0');region=tk.StringVar();strength=tk.DoubleVar(value=.015);steps=tk.StringVar(value='Balanced');threshold=tk.DoubleVar(value=.6)
+    visual=tk.StringVar(value='Off');visual_choice=tk.StringVar(value='Live view');layer=tk.StringVar(value='Shapes');camera=tk.StringVar(value='0');region=tk.StringVar();strength=tk.DoubleVar(value=.025);steps=tk.StringVar(value='Detailed');threshold=tk.DoubleVar(value=.6)
     status=tk.StringVar(value='Choose Camera, Screen, or Open image to begin. No capture starts automatically.')
     device_text=tk.StringVar(value='Detecting compute device…')
     source_text=tk.StringVar(value='IDLE');metrics_text=tk.StringVar(value='Ready when you are');visual_text=tk.StringVar(value='Feature maps show filter responses; DeepDream changes image pixels.');model_text=tk.StringVar(value='Recovered baseline · original capstone weights')
@@ -73,6 +73,7 @@ def main():
     def section(title):
         label(sidebar,title,10,mint).pack(anchor='w',padx=16,pady=(15,5))
     colorful=tk.BooleanVar(value=True)
+    dream_motion=tk.StringVar(value='Develop');dream_revision=tk.IntVar(value=0)
     explain_target=tk.StringVar(value='Top prediction');dream_engine=tk.StringVar(value='Expression');dream_scope=tk.StringVar(value='Whole frame');dream_quality=tk.StringVar(value='Balanced');focus_art=tk.BooleanVar(value=False)
     def selected_layer():
         if not layer_names:return ''
@@ -83,7 +84,7 @@ def main():
         nonlocal last_visual
         last_visual=None
         visual_choice.set({'Off':'Live view','DeepDream':'Dream','Activations':'Feature maps','GradCAM':'Explain prediction'}[visual.get()])
-        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get(),dream_engine=dream_engine.get(),dream_scope=dream_scope.get(),dream_depth=layer.get(),dream_resolution={'Quick':256,'Balanced':384,'Detailed':512}[dream_quality.get()],explain_target=explain_target.get())
+        engine.configure(predictions=variables['predictions'].get(),pose=variables['pose'].get(),visual=visual.get(),layer=selected_layer(),strength=strength.get(),steps={'Quick':1,'Balanced':3,'Detailed':6}[steps.get()],threshold=threshold.get(),colorful=colorful.get(),dream_engine=dream_engine.get(),dream_scope=dream_scope.get(),dream_depth=layer.get(),dream_resolution={'Quick':256,'Balanced':384,'Detailed':512}[dream_quality.get()],explain_target=explain_target.get(),dream_motion=dream_motion.get(),dream_revision=dream_revision.get())
         live_canvas.master.grid();views.columnconfigure(0,weight=3)
         if visual.get()=='Off':
             visual_text.set('Visualization paused');vis_canvas.master.grid_remove()
@@ -127,6 +128,13 @@ def main():
     target_control=ttk.Combobox(explain_box,textvariable=explain_target,values=['Top prediction',*LABELS],state='readonly');target_control.pack(fill='x',padx=16,pady=3);target_control.bind('<<ComboboxSelected>>',lambda e:configure())
     label(explain_box,'Largest face · warm = stronger support.\nColors show relative influence, not certainty.',9,muted,justify='left',wraplength=220).pack(anchor='w',padx=16,pady=4)
     strength_box=tk.Frame(sidebar,bg=panel)
+    def develop_frame():
+        dream_motion.set('Develop');dream_revision.set(dream_revision.get()+1);configure()
+    def follow_input():
+        dream_motion.set('Live');configure()
+    ttk.Button(strength_box,text='Develop this frame',command=develop_frame,style='Accent.TButton').pack(fill='x',padx=16,pady=3)
+    ttk.Button(strength_box,text='Follow live input',command=follow_input).pack(fill='x',padx=16,pady=3)
+    label(strength_box,'Develop holds one frame and builds the dream over time.',9,muted,wraplength=220,justify='left').pack(anchor='w',padx=16,pady=4)
     label(strength_box,'Dream area',9,muted).pack(anchor='w',padx=16,pady=(5,0))
     scope_control=ttk.Combobox(strength_box,textvariable=dream_scope,values=['Whole frame','Face only'],state='readonly');scope_control.pack(fill='x',padx=16,pady=3);scope_control.bind('<<ComboboxSelected>>',lambda e:configure())
     ttk.Checkbutton(strength_box,text='Expand artwork',variable=focus_art,command=configure).pack(anchor='w',padx=12)
@@ -140,7 +148,7 @@ def main():
             control=ttk.Combobox(window,textvariable=var,values=values,state='readonly');control.pack(anchor='w',padx=24)
             control.bind('<<ComboboxSelected>>',lambda e:configure())
             label(window,explanation,9,muted,wraplength=510,justify='left').pack(anchor='w',padx=24,pady=4)
-        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'Fine detail emphasizes textures. Deeper features combine patterns. These are creative presets, not emotion labels.')
+        choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'For Follow live input only. Develop this frame combines the three deepest convolution layers.')
         choice('Dream resolution',dream_quality,['Quick','Balanced','Detailed'],'256, 384, or 512 pixels on the longest edge, preserving shape. Higher detail costs more GPU time; CPU is capped at 256.')
         choice('Dream processing',steps,['Quick','Balanced','Detailed'],'1, 3, or 6 pixel-update steps per refresh. More steps change the image further but can slow updates. This does not train the model.')
         ttk.Checkbutton(window,text='Preserve input colors in Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)

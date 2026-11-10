@@ -19,7 +19,9 @@ def main():
     maps=visualizer.render(frame,visualizer.layers[2],'Activations')
     frames=[]
     dream=ModelDream(model)
-    for _ in range(20):frames.append(dream.render(frame,visualizer.layers[-1],.025,6))
+    for _ in range(62):
+        artwork,_=dream.render_developed(frame,.025,6)
+        frames.append(artwork)
     def font(size):
         try:return ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',size)
         except OSError:return ImageFont.load_default(size=size)

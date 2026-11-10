@@ -27,7 +27,7 @@ def main():
         engine.configure(predictions=True,visual='Activations');engine.switch('Image',image=args.image)
         frame=wait(engine.frames);features=wait(engine.visuals)
         result.update(faces=len(frame['faces']),source=frame['source'],feature_shape=list(features['image'].shape))
-        engine.configure(visual='DeepDream',colorful=False,dream_engine='Expression')
+        engine.configure(visual='DeepDream',colorful=False,dream_engine='Expression',dream_motion='Live')
         dream=wait(engine.visuals,lambda p:p['mode']=='DeepDream')
         import numpy as np
         assert np.array_equal(dream['image'][:,:,0],dream['image'][:,:,1])
@@ -41,6 +41,14 @@ def main():
         explained=wait(engine.visuals,lambda p:p['mode']=='GradCAM')
         assert 'happy' in explained['caption']
         result['explanation']=explained['caption']
+        engine.configure(visual='DeepDream',dream_motion='Develop',dream_revision=1)
+        developing=wait(engine.visuals,lambda p:p['mode']=='DeepDream' and p['settings'].dream_revision==1)
+        assert 'held frame' in developing['caption']
+        engine.configure(dream_revision=2)
+        restarted=wait(engine.visuals,lambda p:p['mode']=='DeepDream' and p['settings'].dream_revision==2)
+        assert restarted['caption'].startswith('Developing large structures')
+        result['held_frame_restart']='passed'
+        engine.configure(visual='GradCAM')
         import cv2
         args.output.parent.mkdir(parents=True,exist_ok=True)
         blank=args.output.with_name('blank-explanation-test.png')

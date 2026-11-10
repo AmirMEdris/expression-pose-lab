@@ -49,3 +49,9 @@ Added explicit backend fallback, first-frame validation, cleanup on failed attem
 - Capture is capped at 30 FPS, visualization work uses a separate bounded queue, still-image face inference is cached, and pose loads lazily. These resource controls are not a guaranteed frame-rate claim.
 - The residual run completed all 50 epochs with 1,773,735 parameters. Selected-checkpoint test accuracy: 62.1501%; macro F1: 58.3602%. The earlier compact candidate scored 59.0705% and 53.7231% on the same 3,572-image partition. This is not an independent external benchmark; the old baseline’s unknown training exposure still prevents a clean comparison with it.
 - Privacy audit of tracked files and history found only the synthetic documentation gallery as added media. No camera photo, face crop, recording, training image, or attached screenshot is committed.
+
+## Held-frame development
+
+- Stronger mode holds the first input while progressing through 362 coarse-to-fine updates, combining the three deepest convolution layers of the loaded expression model. The lighter live effect remains selectable.
+- Full development completed on the public historical sample; the completed result stayed unchanged when a different input was submitted. Reset clears the held frame. The full source check took about 30 seconds including initialization on the verified GPU, with a 0.15-second median chunk time; this is not a guaranteed camera FPS.
+- Synthetic-input smoke checks verify held-frame isolation and reset. Visual comparisons show larger distortions than the prior live settings; subjective resemblance to faces is not an accuracy measurement. Public-sample previews remain local and untracked.
