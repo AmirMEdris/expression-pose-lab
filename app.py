@@ -10,6 +10,7 @@ os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '2')
 import cv2
 from pose import PoseEstimator, draw_poses
 from pose_quality import assess_pose
+from camera import open_camera
 
 ROOT = Path(__file__).resolve().parent
 
@@ -91,9 +92,13 @@ def main():
             drawn = len(poses) if args.show_partial_poses else sum(q['displayable'] for q in report['pose_quality'])
             print(f'Saved {output}: {len(poses)} detected / {drawn} drawn poses, {len(faces)} faces')
             return
-        capture = cv2.VideoCapture(args.camera if args.camera is not None else str(args.video))
-        if not capture.isOpened():
-            raise RuntimeError('Cannot open input camera or video')
+        first_frame = None
+        if args.camera is not None:
+            capture, first_frame = open_camera(args.camera)
+        else:
+            capture = cv2.VideoCapture(str(args.video))
+            if not capture.isOpened():
+                raise RuntimeError(f'Cannot open video: {args.video}')
         fps = capture.get(cv2.CAP_PROP_FPS)
         fps = fps if math.isfinite(fps) and fps > 0 else 30.0
         if args.output:
@@ -102,7 +107,11 @@ def main():
         started = time.monotonic()
         previous_timestamp = -1
         while args.max_frames == 0 or index < args.max_frames:
-            ok, frame = capture.read()
+            if first_frame is not None:
+                ok, frame = True, first_frame
+                first_frame = None
+            else:
+                ok, frame = capture.read()
             if not ok:
                 if index == 0:
                     raise RuntimeError('Input opened, but no frame could be read')
@@ -126,7 +135,7 @@ def main():
                     'poses':poses,'faces':faces})+'\n')
             index += 1
             if args.show or args.camera is not None:
-                cv2.imshow('Expression + Pose Lab — Q to quit', annotated)
+                cv2.imshow('Expression + Pose Lab - Q to quit', annotated)
                 if cv2.waitKey(1) & 0xFF in (ord('q'),27):
                     break
         print(f'Processed {index} frames in {time.monotonic()-started:.2f}s')

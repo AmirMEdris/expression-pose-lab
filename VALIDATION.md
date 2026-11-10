@@ -22,3 +22,9 @@ The original tf_pose implementation was replaced; it was not restored or tested.
 ## Follow-up: pose quality review
 
 The initial group-photo skeleton is a qualitative failure; successful execution did not establish correct alignment. See POSE_COMPARISON.md for the lite/full/heavy comparison and actual moving-footage test. The updated default withholds incomplete bodies, with explicit diagnostic access to raw estimates. The test suite now contains 18 passing unit tests.
+
+## Desktop camera launch
+
+The Python process launched through the assistant execution environment could not open camera indices 0-2 through DirectShow or Media Foundation. Windows Camera displayed a live feed. After the user ran launch_camera.cmd from the normal Windows desktop, the user confirmed the live camera window opened; its application window was also observed in the desktop inventory. The assistant did not inspect the live model overlay before that window closed. Camera-frame acquisition/display is user-confirmed; model accuracy on that feed is not verified.
+
+Added explicit backend fallback, first-frame validation, cleanup on failed attempts, and a desktop launcher. 20 unit tests pass, including mocked camera-backend fallback and all-backend failure cleanup. No camera recording was saved by the launcher.

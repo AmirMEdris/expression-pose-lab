@@ -34,6 +34,12 @@ On macOS/Linux, use `.venv/bin/python` instead. Those platforms have not yet bee
 
 Camera capture is never started by importing modules or installing the project. Images and videos are processed on the local machine. Downloads happen only when you run the model downloader or install packages. Video files are saved without audio; camera recordings use nominal capture FPS and are not guaranteed to preserve wall-clock timing.
 
+### Camera startup on Windows
+
+After setup, double-click `launch_camera.cmd` to start the desktop camera demo. It opens camera 0 and saves no recordings. Model loading can take 20–40 seconds. Press Q or Escape in the live window to close it.
+
+Camera capture tries DirectShow, Media Foundation, and automatic selection, requiring an actual frame before accepting a backend. If all fail, close other camera apps and try a normal desktop launch. A restricted execution environment may be unable to access a camera that works in Windows Camera. For another device, run `python app.py --camera 1` with the project environment activated. Screen capture and keyboard switching between screen and camera are not implemented yet.
+
 ## What changed
 
 - Replaced the missing `tf_pose` dependency with MediaPipe Pose Landmarker (lite).
