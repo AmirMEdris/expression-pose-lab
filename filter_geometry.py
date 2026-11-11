@@ -38,7 +38,7 @@ def model_support(model):
                 kernel=op.kernel_size if name=='Conv2D' else op.pool_size
                 dilation=op.dilation_rate if name=='Conv2D' else (1,1)
                 value=tuple(spatial_step(value[a],kernel[a],op.strides[a],dilation[a],op.padding,int(inputs[0].shape[a+1])) for a in range(2))
-            elif name not in ('BatchNormalization','Activation','ReLU','Dropout','SpatialDropout2D','Add','Concatenate'):
+            elif name not in ('BatchNormalization','Activation','ReLU','Dropout','SpatialDropout2D','Add','Concatenate','Rescaling'):
                 raise ValueError('Unsupported spatial layer: '+name)
         cache[key]=value;return value
     return {layer.name:visit(layer.output) for layer in model.layers if type(layer).__name__=='Conv2D'}

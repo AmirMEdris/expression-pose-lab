@@ -1,0 +1,82 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Expression Lab · Model results</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1120;color:#e2e8f0;font:16px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:60px 28px}.eyebrow{color:#5eead4;letter-spacing:.18em;font-size:12px}h1{font-size:46px;line-height:1.1;margin:18px 0}h2{margin-top:42px}.muted,small{color:#94a3b8}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}.card{border:1px solid #293548;background:#111c30;border-radius:16px;padding:24px}.number{font-size:34px;font-weight:700;color:#5eead4}table{width:100%;border-collapse:separate;border-spacing:4px}td,th{padding:12px;text-align:center;border-radius:5px}small{display:block}td small{color:#e2e8f0}th{font-size:12px}.scroll{overflow:auto}pre{overflow:auto;padding:22px;background:#111c30;border-radius:12px;font-size:13px}svg{width:100%;background:#111c30;border-radius:12px}svg text{fill:#94a3b8;font-size:13px}@media(max-width:650px){.cards{grid-template-columns:1fr}h1{font-size:32px}}
+</style><main><div class="eyebrow">EXPRESSION + POSE LAB / MODEL RESULTS</div><h1>How this model performs.</h1><p class="muted">CanvasNet RGB · trained from scratch · ExpW RGB · custom grouped split evaluation</p><p>Completed 28 epochs with early stopping. Epoch 20 selected by validation macro F1. One final RGB test pass after selection; custom ExpW source/duplicate-group split, not identity-disjoint. Disgust and fear remain weak.</p>
+<div class="cards"><div class="card">Test accuracy<div class="number">68.2%</div></div><div class="card">Macro F1<div class="number">51.6%</div></div><div class="card">Test examples<div class="number">6,472</div></div></div>
+<p>These results describe facial-expression labels in this dataset. They do not establish a person's emotional state or guarantee performance on live camera footage.</p>
+<h2>Same test images, previous model</h2><table><tr><th>Model</th><th>Accuracy</th><th>Macro F1</th></tr><tr><th>CanvasNet RGB</th><td>68.2%</td><td>51.6%</td></tr><tr><th>Previous FER2013 grayscale residual</th><td>47.1%</td><td>33.2%</td></tr></table><p class="muted">Both are evaluated on these same ExpW test faces. Training datasets and input resolutions differ: this is a practical comparison, not an architecture ablation. Cross-dataset image/identity overlap for the prior FER2013 model was not audited. Neither score establishes live-camera accuracy.</p>
+<h3>Learning curves · cross-entropy</h3><p class="muted">Mint: training · Violet: validation · Epoch 1–28</p><svg role="img" aria-label="Learning curves · cross-entropy" viewBox="0 0 760 260"><path d="M45 25V230H735" stroke="#64748b" fill="none"/><text x="5" y="40">1.68</text><text x="20" y="230">0</text><polyline points="45.0,40.0 70.2,43.1 95.4,56.7 120.6,76.8 145.7,86.8 170.9,93.7 196.1,97.9 221.3,101.8 246.5,104.7 271.7,107.8 296.9,110.3 322.0,111.4 347.2,113.6 372.4,115.5 397.6,117.1 422.8,117.9 448.0,119.2 473.1,120.6 498.3,121.8 523.5,122.7 548.7,124.2 573.9,125.4 599.1,126.7 624.3,127.5 649.4,128.4 674.6,129.8 699.8,130.8 725.0,131.4" fill="none" stroke="#5eead4" stroke-width="3"/><polyline points="45.0,41.3 70.2,47.3 95.4,66.4 120.6,83.3 145.7,97.0 170.9,99.0 196.1,102.7 221.3,99.1 246.5,109.3 271.7,113.5 296.9,110.9 322.0,117.3 347.2,107.0 372.4,116.8 397.6,119.5 422.8,115.4 448.0,124.6 473.1,114.8 498.3,121.2 523.5,120.7 548.7,120.5 573.9,123.1 599.1,120.7 624.3,121.8 649.4,123.7 674.6,124.2 699.8,122.5 725.0,121.2" fill="none" stroke="#a78bfa" stroke-width="3"/></svg><h3>Learning curves · accuracy</h3><p class="muted">Mint: training · Violet: validation · Epoch 1–28</p><svg role="img" aria-label="Learning curves · accuracy" viewBox="0 0 760 260"><path d="M45 25V230H735" stroke="#64748b" fill="none"/><text x="5" y="40">1.00</text><text x="20" y="230">0</text><polyline points="45.0,162.4 70.2,158.9 95.4,143.1 120.6,123.4 145.7,118.0 170.9,113.9 196.1,111.8 221.3,109.1 246.5,107.0 271.7,105.6 296.9,104.1 322.0,103.7 347.2,102.2 372.4,100.6 397.6,100.3 422.8,99.7 448.0,99.3 473.1,98.7 498.3,97.3 523.5,97.4 548.7,96.3 573.9,96.1 599.1,95.8 624.3,94.7 649.4,94.2 674.6,94.2 699.8,93.1 725.0,93.1" fill="none" stroke="#5eead4" stroke-width="3"/><polyline points="45.0,160.2 70.2,156.0 95.4,134.6 120.6,118.9 145.7,112.9 170.9,110.9 196.1,111.2 221.3,111.0 246.5,105.5 271.7,103.1 296.9,105.0 322.0,102.7 347.2,107.5 372.4,101.4 397.6,100.4 422.8,102.6 448.0,98.9 473.1,102.2 498.3,98.8 523.5,100.1 548.7,100.6 573.9,99.8 599.1,100.2 624.3,99.6 649.4,98.5 674.6,99.7 699.8,100.5 725.0,102.0" fill="none" stroke="#a78bfa" stroke-width="3"/></svg>
+<h2>Where predictions succeed—and fail</h2><p class="muted">Rows: true class. Columns: predicted class. Percentages normalized within each true class.</p><div class="scroll"><table><tr><th>True ↓ / Predicted →</th><th>angry</th><th>disgust</th><th>fear</th><th>happy</th><th>sad</th><th>surprise</th><th>neutral</th></tr><tr><th>angry</th><td style="background:rgba(94,234,212,0.552)">184<small>59%</small></td><td style="background:rgba(94,234,212,0.111)">12<small>4%</small></td><td style="background:rgba(94,234,212,0.095)">6<small>2%</small></td><td style="background:rgba(94,234,212,0.098)">7<small>2%</small></td><td style="background:rgba(94,234,212,0.165)">33<small>11%</small></td><td style="background:rgba(94,234,212,0.152)">28<small>9%</small></td><td style="background:rgba(94,234,212,0.188)">42<small>13%</small></td></tr><tr><th>disgust</th><td style="background:rgba(94,234,212,0.134)">20<small>7%</small></td><td style="background:rgba(94,234,212,0.124)">16<small>5%</small></td><td style="background:rgba(94,234,212,0.088)">3<small>1%</small></td><td style="background:rgba(94,234,212,0.115)">13<small>4%</small></td><td style="background:rgba(94,234,212,0.243)">60<small>20%</small></td><td style="background:rgba(94,234,212,0.121)">15<small>5%</small></td><td style="background:rgba(94,234,212,0.534)">167<small>57%</small></td></tr><tr><th>fear</th><td style="background:rgba(94,234,212,0.216)">15<small>17%</small></td><td style="background:rgba(94,234,212,0.089)">1<small>1%</small></td><td style="background:rgba(94,234,212,0.325)">27<small>31%</small></td><td style="background:rgba(94,234,212,0.098)">2<small>2%</small></td><td style="background:rgba(94,234,212,0.180)">11<small>12%</small></td><td style="background:rgba(94,234,212,0.307)">25<small>28%</small></td><td style="background:rgba(94,234,212,0.144)">7<small>8%</small></td></tr><tr><th>happy</th><td style="background:rgba(94,234,212,0.084)">11<small>1%</small></td><td style="background:rgba(94,234,212,0.080)">1<small>0%</small></td><td style="background:rgba(94,234,212,0.080)">1<small>0%</small></td><td style="background:rgba(94,234,212,0.727)">1649<small>81%</small></td><td style="background:rgba(94,234,212,0.111)">79<small>4%</small></td><td style="background:rgba(94,234,212,0.097)">44<small>2%</small></td><td style="background:rgba(94,234,212,0.180)">254<small>12%</small></td></tr><tr><th>sad</th><td style="background:rgba(94,234,212,0.121)">44<small>5%</small></td><td style="background:rgba(94,234,212,0.092)">13<small>2%</small></td><td style="background:rgba(94,234,212,0.092)">13<small>2%</small></td><td style="background:rgba(94,234,212,0.124)">47<small>5%</small></td><td style="background:rgba(94,234,212,0.520)">473<small>55%</small></td><td style="background:rgba(94,234,212,0.109)">31<small>4%</small></td><td style="background:rgba(94,234,212,0.302)">239<small>28%</small></td></tr><tr><th>surprise</th><td style="background:rgba(94,234,212,0.138)">40<small>7%</small></td><td style="background:rgba(94,234,212,0.084)">3<small>1%</small></td><td style="background:rgba(94,234,212,0.118)">26<small>5%</small></td><td style="background:rgba(94,234,212,0.126)">32<small>6%</small></td><td style="background:rgba(94,234,212,0.139)">41<small>7%</small></td><td style="background:rgba(94,234,212,0.512)">299<small>54%</small></td><td style="background:rgba(94,234,212,0.243)">113<small>20%</small></td></tr><tr><th>neutral</th><td style="background:rgba(94,234,212,0.089)">26<small>1%</small></td><td style="background:rgba(94,234,212,0.089)">27<small>1%</small></td><td style="background:rgba(94,234,212,0.080)">1<small>0%</small></td><td style="background:rgba(94,234,212,0.135)">159<small>7%</small></td><td style="background:rgba(94,234,212,0.177)">282<small>12%</small></td><td style="background:rgba(94,234,212,0.101)">62<small>3%</small></td><td style="background:rgba(94,234,212,0.688)">1768<small>76%</small></td></tr></table></div>
+<h2>Every class counts</h2><table><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr><tr><th>angry</th><td>54.1%</td><td>59.0%</td><td>56.4%</td><td>312</td></tr><tr><th>disgust</th><td>21.9%</td><td>5.4%</td><td>8.7%</td><td>294</td></tr><tr><th>fear</th><td>35.1%</td><td>30.7%</td><td>32.7%</td><td>88</td></tr><tr><th>happy</th><td>86.4%</td><td>80.9%</td><td>83.5%</td><td>2039</td></tr><tr><th>sad</th><td>48.3%</td><td>55.0%</td><td>51.4%</td><td>860</td></tr><tr><th>surprise</th><td>59.3%</td><td>54.0%</td><td>56.5%</td><td>554</td></tr><tr><th>neutral</th><td>68.3%</td><td>76.0%</td><td>71.9%</td><td>2325</td></tr></table>
+<h2>Confidence quality</h2><p>Expected calibration error: 0.090 (10 bins). Negative log-likelihood: 0.967. Raw probabilities are not calibrated; the app's uncertainty threshold is a display rule.</p>
+<h2>Reproducibility</h2><pre>{
+  &quot;name&quot;: &quot;ExpW RGB \u00b7 custom grouped split&quot;,
+  &quot;source&quot;: &quot;https://mmlab.ie.cuhk.edu.hk/projects/socialrelation/index.html&quot;,
+  &quot;raw_label_count&quot;: 91793,
+  &quot;cached_count&quot;: 66454,
+  &quot;usable_count&quot;: 64715,
+  &quot;size&quot;: 224,
+  &quot;channels&quot;: 3,
+  &quot;color_space&quot;: &quot;RGB&quot;,
+  &quot;min_native_face&quot;: 64,
+  &quot;crop_margin&quot;: 0.1,
+  &quot;bbox_convention&quot;: &quot;right/bottom interpreted as inclusive; clamp to image&quot;,
+  &quot;rejected&quot;: {
+    &quot;native_face_below_64px&quot;: 25339
+  },
+  &quot;exact_duplicate_crops_removed&quot;: 1665,
+  &quot;conflicting_exact_crops_removed&quot;: 74,
+  &quot;near_duplicate_pairs&quot;: 4868,
+  &quot;phash_hamming_max&quot;: 3,
+  &quot;split_seed&quot;: 2026,
+  &quot;split_sha256&quot;: &quot;9b856d1e25bd113269eee356a2a7619592d1c0323b6f5af5bc2474cfc5d0f7de&quot;,
+  &quot;counts&quot;: {
+    &quot;train&quot;: 51771,
+    &quot;val&quot;: 6472,
+    &quot;test&quot;: 6472
+  },
+  &quot;class_counts&quot;: {
+    &quot;train&quot;: [
+      2497,
+      2350,
+      702,
+      16309,
+      6882,
+      4431,
+      18600
+    ],
+    &quot;val&quot;: [
+      313,
+      294,
+      88,
+      2039,
+      860,
+      553,
+      2325
+    ],
+    &quot;test&quot;: [
+      312,
+      294,
+      88,
+      2039,
+      860,
+      554,
+      2325
+    ]
+  },
+  &quot;native_side_percentiles&quot;: {
+    &quot;p10&quot;: 69.0,
+    &quot;p50&quot;: 134.0,
+    &quot;p90&quot;: 322.0
+  },
+  &quot;color_fraction&quot;: 0.9641659584331299,
+  &quot;group_count&quot;: 52491,
+  &quot;max_group_size&quot;: 13,
+  &quot;limitations&quot;: [
+    &quot;Custom 80/10/10 split; not an official ExpW benchmark.&quot;,
+    &quot;Source and detected duplicates grouped, but identities may cross splits.&quot;,
+    &quot;pHash detects some near-duplicates, not all; labels may be noisy.&quot;,
+    &quot;Upscaling does not recover missing original detail.&quot;,
+    &quot;No explicit redistribution license found; dataset and trained weights stay local.&quot;
+  ]
+}</pre><p class="muted">Machine-readable metrics and per-example predictions are saved alongside the checkpoint. Dataset images are not embedded in this report.</p></main></html>

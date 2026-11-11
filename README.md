@@ -2,6 +2,8 @@
 
 **Live expressions, body pose, and a window into the neural network.**
 
+**Custom RGB model:** [CanvasNet](CANVASNET.md) adds a 224×224 color expression network trained from scratch, dropout, a two-scale classifier, visible GPU training progress, and real RGB DeepDream through the same weights. Its local training workflow generates fixed-input Dream comparisons every ten epochs. The data and trained RGB weights stay local; public source builds retain the recovered baseline until a compatible color checkpoint is installed.
+
 ![Actual feature maps and gradient-ascent output on a synthetic pattern](docs/neural-gallery.png)
 
 ## Use the desktop app
@@ -20,19 +22,19 @@ The default view gives the input the available space. The neural panel appears o
 | View or control | Meaning |
 | --- | --- |
 | Live view | Your input with optional expression and pose overlays. |
-| Filter response | Inspect one filter on the original face. Left: exact 48×48 grayscale classifier input, enlarged, with the structural support box of a strongest unit. Right: a coarse response overlay. Yellow is higher and purple is lower within this image; colors are not confidence or semantic labels. No face means no map. |
+| Filter response | Inspect one filter on the original face. Left: the exact classifier input, enlarged, with the structural support box of a strongest unit. This is 48×48 grayscale for older models or 224×224 RGB for CanvasNet. Right: a coarse response overlay. Yellow is higher and purple is lower within this image; colors are not confidence or semantic labels. No face means no map. |
 | Feature maps | Responses from 16 filters. Brighter means stronger response **within that tile**. Each tile has its own scale; these are not class probabilities or an explanation of a prediction. |
-| Dream | Multiscale gradient ascent through the loaded expression model’s convolutional features. The same weights operate on a larger image; classification still uses 48×48 faces. |
+| Dream | Multiscale gradient ascent through the loaded expression model’s features. The same weights operate on larger images; classification uses the model's declared native input size. |
 | Dream target | **One filter** uses the exact Layer and Filter ID you choose. Numbering matches Explore filters: layers start at 1, filters at 0. **Mixed features** restores the broader effect. |
-| Develop this frame | Default Dream behavior. Holds one frame while 362 updates build large structures, then finer detail. Click again to start a new dream from the current input. |
+| Develop this frame | Holds one frame while coarse-to-fine updates develop the Dream: 362 for the grayscale path, 160 for RGB. Click again to start from the current input. |
 | Follow live input | Faster, lighter effect that follows changing camera or screen content. It trades accumulated transformation for motion. |
 | Dream area | Whole frame (default) or Face only. Face only uses the largest detected face, falling back to the whole frame when none is found. |
 | Expand artwork | Gives the artwork the full available viewport instead of showing it beside the live input. Screen input plus Whole frame processes your screen scene. |
 | Dream intensity | How far pixels change during each update. More is not more accurate. |
-| Keep image structure | On by default. Smooths the update direction and limits luminance changes to 0.14 around the source at each scale and in the final preview. This source-image constraint preserves context; it does not add learned features. Turn it off for the previous unrestricted effect. |
-| Pattern depth, in View settings | Applies to Mixed features + Follow live input: Fine detail / Shapes / Abstract select early / middle / late layers. Mixed features + Develop combines the three deepest layers. One filter always uses your exact selection. |
+| Keep image structure | On by default. Limits changes around the source: 0.14 in normalized luminance for grayscale models, 0.18 per RGB channel for color models. Gradient smoothing also suppresses fine noise. These are image priors, not learned features. Turn the constraint off for stronger transformations. |
+| Pattern depth, in View settings | Applies to Mixed features + Follow live input: Fine detail / Shapes / Abstract select early / middle / late convolutions. Mixed + Develop combines three late layers in older models, or stages 2–4 in CanvasNet. One filter always uses your exact selection. |
 | Dream processing, in View settings | Quick / Balanced / Detailed perform 1 / 3 / 6 pixel-update steps per refresh. More steps take more time; they **do not retrain the model**. |
-| Preserve input colors | Your model changes luminance; original chroma is preserved. The classifier still sees grayscale. |
+| Show color in Dream | RGB models learn changes to all three color channels. Older grayscale models change luminance and retain source chroma. Turn off to display grayscale. |
 | Explain prediction | Grad-CAM for the largest detected face using the loaded classifier. Choose a class; warm areas show relative positive support, not certainty. |
 | Dream resolution, in View settings | Quick / Balanced / Detailed cap the longest edge at 256 / 384 / 512 pixels without stretching. CPU is capped at 256. |
 
@@ -44,7 +46,7 @@ Dream now displays its actual starting image beside its result. Held-frame Dream
 
 One filter maximizes that channel’s **mean response across spatial positions**. Other channels still participate in the forward network, but their responses are not added to the objective. The caption re-evaluates the actual displayed image and shows the selected channel’s before/after mean at that preview size. This is different from the explorer’s fixed-unit score. Jitter, resizing, color restoration, and pixel clipping mean the displayed score is not guaranteed to increase at every update; the caption reports the actual result.
 
-The held-frame mode uses the same expression-model weights and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. Mixed features balances the mean responses of three late layers; One filter targets only the chosen channel. Keep image structure constrains this optimization; unrestricted ascent can fill the image with repeated textures and erase its original structure. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction. Higher display resolution does not recover detail or learned RGB features missing from the 48×48 grayscale training data.
+The held-frame mode uses the same expression-model weights. Grayscale models use a 48/96/192/output-size pyramid; RGB uses 112/224/output size. Mixed features balances layer responses; One filter targets only the chosen channel. Keep image structure constrains this optimization; unrestricted ascent can fill the image with repeated textures and erase its original structure. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction. Higher display resolution does not recover detail missing from training images.
 
 ### Explore individual filters
 
@@ -67,7 +69,9 @@ The procedure combines [dataset examples with feature optimization](https://dist
 
 ### Expression model results
 
-The app still defaults to the **recovered historical baseline**, not the missing final capstone model. The new residual candidate completed 50 epochs and scored **62.15% test accuracy and 58.36% macro F1**, improving over the compact candidate below on the same deduplicated FER2013 partition. It has 1,773,735 parameters versus the recovered baseline’s 2,787,015 (about 36% fewer). Its checkpoint was selected by validation loss. This is a comparison with the compact experiment, not proof of superiority to the lost FinalModel or a live-camera benchmark. A new compact candidate was trained from scratch, but its run stopped after 27 of 30 requested epochs. Evaluation of its saved best validation-loss checkpoint produced **59.1% test accuracy and 53.7% macro F1** on 3,572 deduplicated FER2013 test images. This is a development candidate, not a demonstrated improvement or a production-quality claim.
+**CanvasNet RGB completed 28 epochs on ExpW, selecting epoch 20 by validation macro F1.** On 6,472 held-out faces, it scored **68.23% accuracy and 51.62% macro F1**. The previous FER2013 grayscale residual scored **47.14% accuracy and 33.22% macro F1 on those same ExpW faces**. This is a practical comparison across different training datasets and resolutions, not proof that the architecture alone caused the improvement. Prior FER2013/ExpW image or identity overlap was not audited. Disgust recognition remains poor (8.7% F1); fear is also weak (32.7% F1). Live-camera accuracy is unmeasured. See [full RGB results](docs/evaluation/expression-rgb.report.html) and [architecture/data protocol](CANVASNET.md).
+
+Public source builds default to the **recovered historical baseline**, not the missing final capstone model. A locally installed CanvasNet RGB checkpoint becomes the color default. The grayscale residual candidate completed 50 epochs and scored **62.15% test accuracy and 58.36% macro F1**, improving over the compact candidate below on the same deduplicated FER2013 partition. It has 1,773,735 parameters versus the recovered baseline’s 2,787,015 (about 36% fewer). Its checkpoint was selected by validation loss. This is a comparison with the compact experiment, not proof of superiority to the lost FinalModel or a live-camera benchmark. A new compact candidate was trained from scratch, but its run stopped after 27 of 30 requested epochs. Evaluation of its saved best validation-loss checkpoint produced **59.1% test accuracy and 53.7% macro F1** on 3,572 deduplicated FER2013 test images. This is a development candidate, not a demonstrated improvement or a production-quality claim.
 
 The historical baseline scored 92.8% on those images, but its original training-split provenance is unknown. That number may reflect prior exposure and **must not be presented as clean held-out accuracy**. A second spatial candidate collapsed during training and is not shipped as a recommended model. Live-camera accuracy remains unmeasured. See [dataset protocol](DATASET.md) and the checkpoint-specific reports for the full context.
 
@@ -77,7 +81,7 @@ The Windows GPU path uses Keras with PyTorch CUDA. Expression inference and Deep
 
 For a fresh NVIDIA source environment, install `requirements-gpu.txt` instead of `requirements.txt`. The default backend chooses PyTorch when installed and otherwise TensorFlow. A CUDA-enabled PyTorch installation falls back to CPU when no compatible GPU is available. Set `KERAS_BACKEND=tensorflow` before launch to explicitly use the TensorFlow installation. The portable GPU bundle is large because it includes the CUDA runtime.
 
-Dream and prediction explanations both use the loaded expression classifier. No unrelated ImageNet model drives the artwork. Dream clones the convolutional feature graph with exactly the same weights and flexible image dimensions, then uses coarse-to-fine ascent and jitter. Its source-color option restores chroma after luminance optimization. Applying 48×48-trained filters at larger sizes is an artistic extrapolation, not a higher-resolution accuracy claim. Truly learned color features would require labeled RGB training data.
+Dream and prediction explanations both use the loaded expression classifier. No unrelated ImageNet model drives the artwork. Dream clones the feature graph with exactly the same weights and flexible image dimensions, then uses coarse-to-fine ascent and jitter. Grayscale models restore source chroma after luminance optimization; CanvasNet optimizes RGB directly using its learned color weights. Applying either model at larger image sizes is an artistic extrapolation, not a higher-resolution accuracy claim.
 
 Grad-CAM uses class gradients from the loaded model, without changing its weights or softmax. It is a coarse, relative localization of positive support for a class, not a causal proof or a measure of emotion. No face means no explanation heatmap. See the [Keras Grad-CAM reference](https://keras.io/examples/vision/grad_cam/).
 

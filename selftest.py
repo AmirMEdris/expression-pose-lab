@@ -114,6 +114,8 @@ def run(root,output):
         guided_live=structured.render(rgb,target,channel=35,steps=3,long_edge=256,animate=False,preserve_color=False,preserve_structure=True)
         assert np.max(np.abs(guided_live[:,:,0].astype(np.float32)/255-source_luma))<=.145
         result['KeepStructure']=dict(status='passed',held_and_live_bounds=True)
+        from rgb_selftest import run as check_rgb
+        result['RGB']=check_rgb(root)
         from pose import PoseEstimator
         pose=PoseEstimator(root/'models/pose_landmarker_lite.task')
         try:result['blank_pose_count']=len(pose.detect(np.zeros((256,256,3),np.uint8)))

@@ -1,7 +1,7 @@
 """Read a selected channel on the classifier's actual input; no pixel ascent."""
 import cv2
 import numpy as np
-from expression import preprocess
+from expression import preprocess_frame
 from filter_geometry import model_support,support_box
 from dream_selection import filter_activation
 
@@ -29,7 +29,7 @@ def overlay_response(gray,normalized,geometry):
     map_y=(yy-(gy[1]+gy[2])/2)/gy[0]
     heat=cv2.remap(normalized,map_x,map_y,cv2.INTER_LINEAR,borderMode=cv2.BORDER_REPLICATE)
     colors=cv2.applyColorMap(np.uint8(np.clip(heat,0,1)*255),cv2.COLORMAP_INFERNO)
-    original=cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR)
+    original=cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR) if gray.ndim==2 else gray
     return cv2.addWeighted(original,.55,colors,.45,0)
 
 
@@ -40,24 +40,25 @@ class FilterInspector:
 
     def render(self,frame,layer,channel):
         from backend import predict_numpy
-        values=preprocess(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY))
+        values=preprocess_frame(frame,self.visualizer.model.input_shape)
         activation=predict_numpy(self.visualizer.extractor(layer),values)
         selected=filter_activation(activation,channel)[0,:,:,0]
         summary=response_summary(selected)
-        gray=np.rint(values[0,:,:,0]*255).astype(np.uint8)
-        original=cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR)
+        pixels=np.rint(values[0]*255).astype(np.uint8)
+        original=cv2.cvtColor(pixels,cv2.COLOR_RGB2BGR) if pixels.shape[-1]==3 else cv2.cvtColor(pixels[:,:,0],cv2.COLOR_GRAY2BGR)
+        side=values.shape[1];scale=480/side
         reference=cv2.resize(original,(480,480),interpolation=cv2.INTER_NEAREST)
         box=None
         if summary['peak'] is None:
             image=original
             explanation='No response anywhere on this face.' if summary['high']==0 else 'Uniform response: no distinct strongest region.'
         else:
-            box=support_box(self.geometry[layer],*summary['peak'])
+            box=support_box(self.geometry[layer],*summary['peak'],size=side)
             x0,y0,x1,y1=box
-            cv2.rectangle(reference,(x0*10,y0*10),(x1*10-1,y1*10-1),(65,220,255),3)
-            image=overlay_response(gray,summary['normalized'],self.geometry[layer])
+            cv2.rectangle(reference,(round(x0*scale),round(y0*scale)),(round(x1*scale)-1,round(y1*scale)-1),(65,220,255),3)
+            image=overlay_response(original,summary['normalized'],self.geometry[layer])
             explanation='Yellow = higher response; purple = lower. Colors are relative, not confidence.'
         number=self.visualizer.layers.index(layer)+1
         caption=f'Layer {number} / Filter {channel} on the unmodified input. {explanation} Range {summary["low"]:.3g} to {summary["high"]:.3g}.'
-        reference_caption='Exact 48×48 input, enlarged. '+('Box = the region available to a strongest unit; not an eye/mouth outline.' if box else 'No distinct response region to box.')
+        reference_caption=f'Exact {side}×{side} '+('RGB' if pixels.shape[-1]==3 else 'grayscale')+' input, enlarged. '+('Box = the region available to a strongest unit; not an eye/mouth outline.' if box else 'No distinct response region to box.')
         return dict(image=cv2.resize(image,(480,480),interpolation=cv2.INTER_NEAREST),reference=reference,caption=caption,reference_caption=reference_caption,box=box,peak=summary['peak'],low=summary['low'],high=summary['high'],grid=selected)

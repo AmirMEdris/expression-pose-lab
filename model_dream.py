@@ -15,6 +15,14 @@ def preview_size(shape,long_edge):
 
 
 class ModelDream:
+    total_updates=362
+
+    def __new__(cls,model):
+        if cls is ModelDream and model.input_shape[-1]==3:
+            from rgb_model_dream import RGBModelDream
+            return RGBModelDream(model)
+        return super().__new__(cls)
+
     def __init__(self,model):
         import keras
         self.keras=keras;self.model=model;self.cache={};self.previous=None;self.last_input=None;self.last_key=None;self.counter=0;self.development=None;self.deep_features=None;self.measurement=None

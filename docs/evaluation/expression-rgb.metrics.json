@@ -1,0 +1,779 @@
+{
+  "architecture": "CanvasNet RGB \u00b7 trained from scratch",
+  "dataset": {
+    "name": "ExpW RGB \u00b7 custom grouped split",
+    "source": "https://mmlab.ie.cuhk.edu.hk/projects/socialrelation/index.html",
+    "raw_label_count": 91793,
+    "cached_count": 66454,
+    "usable_count": 64715,
+    "size": 224,
+    "channels": 3,
+    "color_space": "RGB",
+    "min_native_face": 64,
+    "crop_margin": 0.1,
+    "bbox_convention": "right/bottom interpreted as inclusive; clamp to image",
+    "rejected": {
+      "native_face_below_64px": 25339
+    },
+    "exact_duplicate_crops_removed": 1665,
+    "conflicting_exact_crops_removed": 74,
+    "near_duplicate_pairs": 4868,
+    "phash_hamming_max": 3,
+    "split_seed": 2026,
+    "split_sha256": "9b856d1e25bd113269eee356a2a7619592d1c0323b6f5af5bc2474cfc5d0f7de",
+    "counts": {
+      "train": 51771,
+      "val": 6472,
+      "test": 6472
+    },
+    "class_counts": {
+      "train": [
+        2497,
+        2350,
+        702,
+        16309,
+        6882,
+        4431,
+        18600
+      ],
+      "val": [
+        313,
+        294,
+        88,
+        2039,
+        860,
+        553,
+        2325
+      ],
+      "test": [
+        312,
+        294,
+        88,
+        2039,
+        860,
+        554,
+        2325
+      ]
+    },
+    "native_side_percentiles": {
+      "p10": 69.0,
+      "p50": 134.0,
+      "p90": 322.0
+    },
+    "color_fraction": 0.9641659584331299,
+    "group_count": 52491,
+    "max_group_size": 13,
+    "limitations": [
+      "Custom 80/10/10 split; not an official ExpW benchmark.",
+      "Source and detected duplicates grouped, but identities may cross splits.",
+      "pHash detects some near-duplicates, not all; labels may be noisy.",
+      "Upscaling does not recover missing original detail.",
+      "No explicit redistribution license found; dataset and trained weights stay local."
+    ]
+  },
+  "test": {
+    "accuracy": 0.6823238566131026,
+    "macro_f1": 0.516185821937962,
+    "confusion_matrix": [
+      [
+        184,
+        12,
+        6,
+        7,
+        33,
+        28,
+        42
+      ],
+      [
+        20,
+        16,
+        3,
+        13,
+        60,
+        15,
+        167
+      ],
+      [
+        15,
+        1,
+        27,
+        2,
+        11,
+        25,
+        7
+      ],
+      [
+        11,
+        1,
+        1,
+        1649,
+        79,
+        44,
+        254
+      ],
+      [
+        44,
+        13,
+        13,
+        47,
+        473,
+        31,
+        239
+      ],
+      [
+        40,
+        3,
+        26,
+        32,
+        41,
+        299,
+        113
+      ],
+      [
+        26,
+        27,
+        1,
+        159,
+        282,
+        62,
+        1768
+      ]
+    ],
+    "precision": [
+      0.5411764705882353,
+      0.2191780821917808,
+      0.35064935064935066,
+      0.8638030382399162,
+      0.48314606741573035,
+      0.5932539682539683,
+      0.6826254826254826
+    ],
+    "recall": [
+      0.5897435897435898,
+      0.05442176870748299,
+      0.3068181818181818,
+      0.8087297694948504,
+      0.55,
+      0.5397111913357401,
+      0.7604301075268817
+    ],
+    "f1": [
+      0.5644171779141104,
+      0.08719346049046321,
+      0.3272727272727272,
+      0.8353596757852079,
+      0.514410005437738,
+      0.5652173913043479,
+      0.7194303153611393
+    ],
+    "support": [
+      312,
+      294,
+      88,
+      2039,
+      860,
+      554,
+      2325
+    ],
+    "nll": 0.9674282111908982,
+    "ece": 0.09010640674066929,
+    "calibration": [
+      {
+        "lower": 0.1,
+        "count": 5,
+        "accuracy": 0.0,
+        "confidence": 0.19216399192810057
+      },
+      {
+        "lower": 0.2,
+        "count": 263,
+        "accuracy": 0.29277566539923955,
+        "confidence": 0.267991640948524
+      },
+      {
+        "lower": 0.3,
+        "count": 1003,
+        "accuracy": 0.452642073778664,
+        "confidence": 0.3573478256776587
+      },
+      {
+        "lower": 0.4,
+        "count": 1362,
+        "accuracy": 0.5624082232011748,
+        "confidence": 0.44849585983546647
+      },
+      {
+        "lower": 0.5,
+        "count": 1100,
+        "accuracy": 0.6663636363636364,
+        "confidence": 0.5479051274061203
+      },
+      {
+        "lower": 0.6,
+        "count": 771,
+        "accuracy": 0.7535667963683528,
+        "confidence": 0.6462513673784822
+      },
+      {
+        "lower": 0.7,
+        "count": 479,
+        "accuracy": 0.8037578288100209,
+        "confidence": 0.7462976660758319
+      },
+      {
+        "lower": 0.8,
+        "count": 662,
+        "accuracy": 0.9108761329305136,
+        "confidence": 0.8596739828406504
+      },
+      {
+        "lower": 0.9,
+        "count": 827,
+        "accuracy": 0.9879081015719468,
+        "confidence": 0.9268475461034994
+      }
+    ]
+  },
+  "best_epoch": 20,
+  "validation": {
+    "accuracy": 0.6838689740420272,
+    "macro_f1": 0.5005415582619362,
+    "confusion_matrix": [
+      [
+        167,
+        11,
+        16,
+        12,
+        33,
+        21,
+        53
+      ],
+      [
+        26,
+        11,
+        2,
+        27,
+        61,
+        11,
+        156
+      ],
+      [
+        22,
+        0,
+        20,
+        2,
+        9,
+        21,
+        14
+      ],
+      [
+        11,
+        1,
+        3,
+        1643,
+        86,
+        44,
+        251
+      ],
+      [
+        30,
+        13,
+        11,
+        56,
+        492,
+        26,
+        232
+      ],
+      [
+        55,
+        3,
+        28,
+        35,
+        27,
+        321,
+        84
+      ],
+      [
+        26,
+        22,
+        4,
+        197,
+        246,
+        58,
+        1772
+      ]
+    ],
+    "precision": [
+      0.49554896142433236,
+      0.18032786885245902,
+      0.23809523809523808,
+      0.8331643002028397,
+      0.5157232704402516,
+      0.6394422310756972,
+      0.6916471506635441
+    ],
+    "recall": [
+      0.5335463258785943,
+      0.03741496598639456,
+      0.22727272727272727,
+      0.805787150564002,
+      0.5720930232558139,
+      0.5804701627486437,
+      0.7621505376344087
+    ],
+    "f1": [
+      0.5138461538461538,
+      0.061971830985915494,
+      0.23255813953488372,
+      0.8192470705559711,
+      0.5424476295479603,
+      0.6085308056872037,
+      0.7251892776754656
+    ],
+    "support": [
+      313,
+      294,
+      88,
+      2039,
+      860,
+      553,
+      2325
+    ],
+    "nll": 0.9639570186243533,
+    "ece": 0.09405549583157667,
+    "calibration": [
+      {
+        "lower": 0.1,
+        "count": 3,
+        "accuracy": 0.0,
+        "confidence": 0.19144328435262045
+      },
+      {
+        "lower": 0.2,
+        "count": 253,
+        "accuracy": 0.34782608695652173,
+        "confidence": 0.2660275826694466
+      },
+      {
+        "lower": 0.3,
+        "count": 1069,
+        "accuracy": 0.4321796071094481,
+        "confidence": 0.3573557941906914
+      },
+      {
+        "lower": 0.4,
+        "count": 1362,
+        "accuracy": 0.5756240822320118,
+        "confidence": 0.448447613617222
+      },
+      {
+        "lower": 0.5,
+        "count": 1076,
+        "accuracy": 0.6737918215613383,
+        "confidence": 0.5472380282932054
+      },
+      {
+        "lower": 0.6,
+        "count": 753,
+        "accuracy": 0.7569721115537849,
+        "confidence": 0.646096166940641
+      },
+      {
+        "lower": 0.7,
+        "count": 461,
+        "accuracy": 0.806941431670282,
+        "confidence": 0.748575989698381
+      },
+      {
+        "lower": 0.8,
+        "count": 713,
+        "accuracy": 0.9116409537166901,
+        "confidence": 0.8593487550633819
+      },
+      {
+        "lower": 0.9,
+        "count": 782,
+        "accuracy": 0.9910485933503836,
+        "confidence": 0.9265926635783651
+      }
+    ]
+  },
+  "test_loss": 0.9674282162386938,
+  "config": {
+    "architecture": "CanvasNet RGB",
+    "pretrained": false,
+    "epochs": 40,
+    "batch_size": 128,
+    "seed": 2026,
+    "learning_rate": 0.0008,
+    "weight_decay": 0.0005,
+    "label_smoothing": 0.05,
+    "patience": 8,
+    "checkpoint_selection": "validation macro F1",
+    "precision": "CUDA bfloat16 autocast; float32 master weights",
+    "parameters": 5045407,
+    "input_shape": [
+      224,
+      224,
+      3
+    ],
+    "spatial_dropout": [
+      0.05,
+      0.1,
+      0.15,
+      0.2
+    ],
+    "head_dropout": 0.35,
+    "split_sha256": "9b856d1e25bd113269eee356a2a7619592d1c0323b6f5af5bc2474cfc5d0f7de",
+    "device": "NVIDIA GeForce RTX 5070 Laptop GPU",
+    "torch_version": "2.11.0+cu128",
+    "workers": 4
+  },
+  "note": "Completed 28 epochs with early stopping. Epoch 20 selected by validation macro F1. One final RGB test pass after selection; custom ExpW source/duplicate-group split, not identity-disjoint. Disgust and fear remain weak.",
+  "export_max_probability_error": 1.1920928955078125e-07,
+  "checkpoint_sha256": "e88d7d57577fb9545ce968e6dff48c35817001eae500d95c7d3c210bd79d1713",
+  "epochs_completed": 28,
+  "comparison": {
+    "dataset": "ExpW RGB \u00b7 custom grouped split",
+    "test_count": 6472,
+    "rgb": {
+      "accuracy": 0.6823238566131026,
+      "macro_f1": 0.516185821937962,
+      "confusion_matrix": [
+        [
+          184,
+          12,
+          6,
+          7,
+          33,
+          28,
+          42
+        ],
+        [
+          20,
+          16,
+          3,
+          13,
+          60,
+          15,
+          167
+        ],
+        [
+          15,
+          1,
+          27,
+          2,
+          11,
+          25,
+          7
+        ],
+        [
+          11,
+          1,
+          1,
+          1649,
+          79,
+          44,
+          254
+        ],
+        [
+          44,
+          13,
+          13,
+          47,
+          473,
+          31,
+          239
+        ],
+        [
+          40,
+          3,
+          26,
+          32,
+          41,
+          299,
+          113
+        ],
+        [
+          26,
+          27,
+          1,
+          159,
+          282,
+          62,
+          1768
+        ]
+      ],
+      "precision": [
+        0.5411764705882353,
+        0.2191780821917808,
+        0.35064935064935066,
+        0.8638030382399162,
+        0.48314606741573035,
+        0.5932539682539683,
+        0.6826254826254826
+      ],
+      "recall": [
+        0.5897435897435898,
+        0.05442176870748299,
+        0.3068181818181818,
+        0.8087297694948504,
+        0.55,
+        0.5397111913357401,
+        0.7604301075268817
+      ],
+      "f1": [
+        0.5644171779141104,
+        0.08719346049046321,
+        0.3272727272727272,
+        0.8353596757852079,
+        0.514410005437738,
+        0.5652173913043479,
+        0.7194303153611393
+      ],
+      "support": [
+        312,
+        294,
+        88,
+        2039,
+        860,
+        554,
+        2325
+      ],
+      "nll": 0.9674282111908982,
+      "ece": 0.09010640674066929,
+      "calibration": [
+        {
+          "lower": 0.1,
+          "count": 5,
+          "accuracy": 0.0,
+          "confidence": 0.19216399192810057
+        },
+        {
+          "lower": 0.2,
+          "count": 263,
+          "accuracy": 0.29277566539923955,
+          "confidence": 0.267991640948524
+        },
+        {
+          "lower": 0.3,
+          "count": 1003,
+          "accuracy": 0.452642073778664,
+          "confidence": 0.3573478256776587
+        },
+        {
+          "lower": 0.4,
+          "count": 1362,
+          "accuracy": 0.5624082232011748,
+          "confidence": 0.44849585983546647
+        },
+        {
+          "lower": 0.5,
+          "count": 1100,
+          "accuracy": 0.6663636363636364,
+          "confidence": 0.5479051274061203
+        },
+        {
+          "lower": 0.6,
+          "count": 771,
+          "accuracy": 0.7535667963683528,
+          "confidence": 0.6462513673784822
+        },
+        {
+          "lower": 0.7,
+          "count": 479,
+          "accuracy": 0.8037578288100209,
+          "confidence": 0.7462976660758319
+        },
+        {
+          "lower": 0.8,
+          "count": 662,
+          "accuracy": 0.9108761329305136,
+          "confidence": 0.8596739828406504
+        },
+        {
+          "lower": 0.9,
+          "count": 827,
+          "accuracy": 0.9879081015719468,
+          "confidence": 0.9268475461034994
+        }
+      ]
+    },
+    "grayscale": {
+      "accuracy": 0.47141532756489496,
+      "macro_f1": 0.3322271788911819,
+      "confusion_matrix": [
+        [
+          196,
+          0,
+          12,
+          25,
+          39,
+          3,
+          37
+        ],
+        [
+          59,
+          2,
+          18,
+          14,
+          103,
+          5,
+          93
+        ],
+        [
+          31,
+          0,
+          16,
+          4,
+          19,
+          15,
+          3
+        ],
+        [
+          110,
+          0,
+          43,
+          1375,
+          252,
+          16,
+          243
+        ],
+        [
+          164,
+          1,
+          56,
+          74,
+          411,
+          5,
+          149
+        ],
+        [
+          103,
+          0,
+          96,
+          44,
+          81,
+          158,
+          72
+        ],
+        [
+          302,
+          1,
+          86,
+          140,
+          888,
+          15,
+          893
+        ]
+      ],
+      "precision": [
+        0.20310880829015543,
+        0.5,
+        0.04892966360856269,
+        0.8204057279236276,
+        0.22922476296709426,
+        0.728110599078341,
+        0.5993288590604027
+      ],
+      "recall": [
+        0.6282051282051282,
+        0.006802721088435374,
+        0.18181818181818182,
+        0.674350171652771,
+        0.47790697674418603,
+        0.2851985559566787,
+        0.38408602150537635
+      ],
+      "f1": [
+        0.3069694596711041,
+        0.013422818791946308,
+        0.07710843373493977,
+        0.7402422611036339,
+        0.3098379193366001,
+        0.4098573281452659,
+        0.46815203145478373
+      ],
+      "support": [
+        312,
+        294,
+        88,
+        2039,
+        860,
+        554,
+        2325
+      ],
+      "nll": 1.5509689194001197,
+      "ece": 0.05781664065694338,
+      "calibration": [
+        {
+          "lower": 0.1,
+          "count": 5,
+          "accuracy": 0.2,
+          "confidence": 0.19485767781734467
+        },
+        {
+          "lower": 0.2,
+          "count": 661,
+          "accuracy": 0.20574886535552195,
+          "confidence": 0.27192484040754467
+        },
+        {
+          "lower": 0.3,
+          "count": 2107,
+          "accuracy": 0.26245847176079734,
+          "confidence": 0.3506758236805862
+        },
+        {
+          "lower": 0.4,
+          "count": 1275,
+          "accuracy": 0.3615686274509804,
+          "confidence": 0.4436898045913846
+        },
+        {
+          "lower": 0.5,
+          "count": 565,
+          "accuracy": 0.5345132743362832,
+          "confidence": 0.5466272095663358
+        },
+        {
+          "lower": 0.6,
+          "count": 382,
+          "accuracy": 0.675392670157068,
+          "confidence": 0.6468970836457157
+        },
+        {
+          "lower": 0.7,
+          "count": 271,
+          "accuracy": 0.7638376383763837,
+          "confidence": 0.7469531403256519
+        },
+        {
+          "lower": 0.8,
+          "count": 247,
+          "accuracy": 0.854251012145749,
+          "confidence": 0.8490544161815875
+        },
+        {
+          "lower": 0.9,
+          "count": 959,
+          "accuracy": 0.9614181438998958,
+          "confidence": 0.9783669032692537
+        }
+      ]
+    },
+    "grayscale_checkpoint": "experiments\\residual-gpu-v1\\best.keras",
+    "grayscale_checkpoint_sha256": "7333c5d4f8b770b5bcd3479ab5f988baf1a96c61a0d716b03c442ab75329628f",
+    "accuracy_difference": 0.21090852904820762,
+    "paired_image_bootstrap_95_percent_interval": [
+      0.1976205191594561,
+      0.22450556242274414
+    ],
+    "caveats": [
+      "Different training datasets, architectures, and input resolutions: not an architecture ablation.",
+      "FER2013/ExpW cross-dataset image or identity overlap was not audited; prior grayscale exposure may include similar examples.",
+      "Bootstrap treats images as independent; related identities can make its interval too narrow.",
+      "Neither dataset score measures live-camera accuracy."
+    ]
+  }
+}

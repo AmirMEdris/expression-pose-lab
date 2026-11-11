@@ -43,6 +43,15 @@ class FeatureVisualizer:
 
     def render(self, frame, layer=None, mode='Activations', strength=.015, steps=3, animate=True, colorful=False):
         layer=layer or self.layers[0];extractor=self.extractor(layer)
+        if mode=='Activations':
+            from expression import preprocess_frame
+            from backend import predict_numpy
+            self.previous=None
+            return activation_grid(predict_numpy(extractor,preprocess_frame(frame,self.model.input_shape))[0])
+        if self.model.input_shape[-1]==3:
+            from model_dream import ModelDream
+            if not hasattr(self,'rgb_dream'):self.rgb_dream=ModelDream(self.model)
+            return self.rgb_dream.render(frame,layer,strength,steps,preserve_color=colorful,animate=animate)
         gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY) if frame.ndim==3 else frame
         original=cv2.resize(gray,(48,48)).astype(np.float32)/255.
         x=self.keras.ops.convert_to_tensor(original[None,:,:,None])

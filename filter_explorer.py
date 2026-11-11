@@ -20,7 +20,7 @@ def matched_controls(descriptors,scores,anchor,excluded,count=3):
     return candidates[np.argsort(scores[candidates],kind='stable')[:count]]
 
 
-def scan(model,images,batch=32):
+def scan(model,images,batch=32,progress=None):
     import torch
     import keras
     layers=[l for l in model.layers if isinstance(l,keras.layers.Conv2D)]
@@ -34,6 +34,7 @@ def scan(model,images,batch=32):
                 flat=a.reshape(a.shape[0],-1,a.shape[-1]);scores,indices=flat.max(dim=1)
                 row=result[layer.name];row['scores'].append(scores.cpu().numpy());row['positions'].append(indices.cpu().numpy());row['shape']=list(a.shape[1:])
             if start%(batch*16)==0:print(f'Scanned {min(start+batch,len(images))}/{len(images)} faces',flush=True)
+            if progress is not None:progress(min(start+batch,len(images)),len(images))
     for row in result.values():
         row['scores']=np.concatenate(row['scores']);row['positions']=np.concatenate(row['positions'])
     return result

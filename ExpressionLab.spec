@@ -1,9 +1,13 @@
 # Build on Windows: python -m PyInstaller --noconfirm ExpressionLab.spec
 import os
+from pathlib import Path
 os.environ['KERAS_BACKEND']='torch'
 from PyInstaller.utils.hooks import collect_data_files,copy_metadata,collect_submodules
 datas=[('models/expression-baseline.h5','models'),('models/pose_landmarker_lite.task','models')]
 datas+=[('docs/evaluation/expression-baseline.metrics.json','models'),('docs/evaluation/expression-baseline.report.html','models')]
+for path in Path('models').glob('expression-rgb.*'):
+    if path.suffix in ('.keras','.json','.html','.npz'):datas.append((str(path),'models'))
+    elif path.is_dir() and path.name.endswith('.filters.assets'):datas.append((str(path),'models/'+path.name))
 datas+=collect_data_files('mediapipe')+collect_data_files('cv2')
 for package in ('torch','keras','mediapipe','numpy','pillow','h5py'):
     datas+=copy_metadata(package)

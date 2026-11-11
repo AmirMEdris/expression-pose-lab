@@ -51,7 +51,8 @@ class Settings:
 class Engine:
     def __init__(self,root,captures):
         self.root=Path(root);self.captures=Path(captures)
-        self.settings=Settings(model=str(self.root/'models/expression-baseline.h5'))
+        from expression import default_model_path
+        self.settings=Settings(model=str(default_model_path(self.root)))
         self.lock=threading.Lock();self.stop=threading.Event();self.capture_face=threading.Event()
         self.frames=queue.Queue(1);self.visuals=queue.Queue(1);self.dream_input=queue.Queue(1);self.events=queue.Queue()
         self.generation=0
@@ -119,6 +120,7 @@ class Engine:
                         replacement=ExpressionEstimator(Path(s.model),s.threshold)
                         expression=replacement;model_path=s.model;self.generation+=1
                         self.events.put(('model',model_path))
+                        self.events.put(('model_info',dict(name=expression.metadata.get('name','Imported model' if Path(model_path).suffix=='.keras' else 'Original capstone baseline'),rgb=expression.model.input_shape[-1]==3)))
                         from visualizations import FeatureVisualizer
                         visualizer=FeatureVisualizer(expression.model)
                         self.events.put(('layers',visualizer.layers))
@@ -150,7 +152,8 @@ class Engine:
                     largest=max(faces,key=lambda f:f['box'][2]*f['box'][3],default=None)
                     visual_frame=frame
                     if largest and (s.visual in ('Activations','GradCAM','Filter') or s.dream_scope=='Face only'):
-                        x,y,w,h=largest['box'];visual_frame=frame[y:y+h,x:x+w]
+                        from expression import face_crop
+                        visual_frame=face_crop(frame,largest['box'],expression.crop_margin)
                     needs_target=s.visual=='Filter' or (s.visual=='DeepDream' and s.dream_target=='One filter')
                     target_ready=not needs_target or (bool(s.dream_layer) and (not s.dream_target_model or Path(s.dream_target_model)==Path(model_path)))
                     if s.visual!='Off' and target_ready and now-last_visual>.15:
@@ -230,7 +233,7 @@ class Engine:
                         m=rgb_dream.measurement
                         target_caption=f'Layer {visualizer.layers.index(target_layer)+1} · Filter {channel} only. Response {m["before"]:.3g} → {m["after"]:.3g}.'
                     else:target_caption='Mixed features from your expression model.'
-                    progress=f'Held image · {rgb_dream.development["total"]}/362 updates.' if s.dream_motion=='Develop' else 'Following live input.'
+                    progress=f'Held image · {rgb_dream.development["total"]}/{rgb_dream.total_updates} updates.' if s.dream_motion=='Develop' else 'Following live input.'
                     caption=f'{target_caption} {progress} '+('Structure kept.' if s.preserve_structure else 'Unrestricted changes.')+' Generated patterns, not feature locations.'
                 else:rendered=visualizer.render(frame,layer,s.visual,s.strength,s.steps,colorful=s.colorful)
                 if generation==self.generation:

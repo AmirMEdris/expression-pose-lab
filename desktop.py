@@ -30,7 +30,7 @@ def main():
     import webbrowser
     from datetime import datetime
     from runtime import Engine
-    from expression import LABELS
+    from expression import LABELS,default_model_path
     root=tk.Tk();root.title('Expression + Pose Lab');root.geometry('1380x900');root.minsize(1120,780)
     bg='#0b1120';panel='#111c30';line='#293548';muted='#94a3b8';text='#e2e8f0';mint='#5eead4';violet='#a78bfa'
     root.configure(bg=bg)
@@ -47,12 +47,15 @@ def main():
     style.configure('TScale',background=panel,troughcolor='#293548')
     engine=Engine(resource_root(),output_root()/'captures')
     current_source='Stopped';last_frame=None;last_visual=None;photos={};layer_names=[];filter_catalog=[];catalog_model=None
-    active_model=resource_root()/'models/expression-baseline.h5'
+    active_model=default_model_path(resource_root())
+    color_note=tk.StringVar(value='RGB models learn color changes. Grayscale models retain the input colors around grayscale patterns.')
     variables={name:tk.BooleanVar(value=value) for name,value in [('predictions',False),('pose',False),('help',True),('fps',True)]}
     visual=tk.StringVar(value='Off');visual_choice=tk.StringVar(value='Live view');layer=tk.StringVar(value='Shapes');camera=tk.StringVar(value='0');region=tk.StringVar();strength=tk.DoubleVar(value=.025);steps=tk.StringVar(value='Detailed');threshold=tk.DoubleVar(value=.6)
+    if active_model.name=='expression-rgb.keras':strength.set(.012)
     status=tk.StringVar(value='Choose Camera, Screen, or Open image to begin. No capture starts automatically.')
     device_text=tk.StringVar(value='Detecting compute device…')
     live_title=tk.StringVar(value='LIVE VIEW');visual_title=tk.StringVar(value='NEURAL CANVAS');source_text=tk.StringVar(value='IDLE');metrics_text=tk.StringVar(value='Ready when you are');visual_text=tk.StringVar(value='Feature maps show filter responses; DeepDream changes image pixels.');model_text=tk.StringVar(value='Recovered baseline · original capstone weights')
+    if active_model.name=='expression-rgb.keras':model_text.set('CanvasNet RGB · choose an input to load the model')
     def label(parent,content,size=10,color=text,**kwargs):
         return tk.Label(parent,text=content,bg=parent.cget('bg'),fg=color,font=('Segoe UI',size),**kwargs)
     top=tk.Frame(root,bg=bg);top.pack(fill='x',padx=26,pady=(22,16))
@@ -74,7 +77,7 @@ def main():
         label(sidebar,title,10,mint).pack(anchor='w',padx=16,pady=(15,5))
     colorful=tk.BooleanVar(value=True);preserve_structure=tk.BooleanVar(value=True)
     dream_motion=tk.StringVar(value='Develop');dream_revision=tk.IntVar(value=0)
-    dream_target=tk.StringVar(value='One filter');exact_layer=tk.StringVar();exact_filter=tk.StringVar()
+    dream_target=tk.StringVar(value='Mixed features' if active_model.name=='expression-rgb.keras' else 'One filter');exact_layer=tk.StringVar();exact_filter=tk.StringVar()
     explain_target=tk.StringVar(value='Top prediction');dream_engine=tk.StringVar(value='Expression');dream_scope=tk.StringVar(value='Whole frame');dream_quality=tk.StringVar(value='Balanced');focus_art=tk.BooleanVar(value=False)
     def selected_layer():
         if not layer_names:return ''
@@ -184,8 +187,8 @@ def main():
         choice('Pattern depth',layer,['Fine detail','Shapes','Abstract'],'For Mixed features + Follow live input only. One filter uses the exact selection in the sidebar.')
         choice('Dream resolution',dream_quality,['Quick','Balanced','Detailed'],'256, 384, or 512 pixels on the longest edge, preserving shape. Higher detail costs more GPU time; CPU is capped at 256.')
         choice('Dream processing',steps,['Quick','Balanced','Detailed'],'1, 3, or 6 pixel-update steps per refresh. More steps change the image further but can slow updates. This does not train the model.')
-        ttk.Checkbutton(window,text='Preserve input colors in Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)
-        label(window,'Patterns come from your expression model. Original colors are preserved; the model still sees grayscale.',9,muted).pack(anchor='w',padx=24)
+        ttk.Checkbutton(window,text='Show color in Dream',variable=colorful,command=configure).pack(anchor='w',padx=20,pady=8)
+        tk.Label(window,textvariable=color_note,bg=panel,fg=muted,font=('Segoe UI',9),wraplength=510,justify='left').pack(anchor='w',padx=24)
         choice('Camera device',camera,['0','1','2','3'],'Choose another device if needed, then click Camera again.')
         label(window,'Screen crop: left, top, width, height (optional)',10).pack(anchor='w',padx=24,pady=(10,4))
         ttk.Entry(window,textvariable=region,width=45).pack(anchor='w',padx=24)
@@ -255,6 +258,8 @@ def main():
         else:messagebox.showinfo('Filter analysis unavailable','No verified filter analysis is attached to the loaded model. Analysis must be generated for these exact weights; another model’s examples would be misleading.')
     for caption,callback in [('Import model',import_model),('Original model',use_baseline),('Model results',open_report),('Explore filters',open_filters)]:
         ttk.Button(actions,text=caption,command=callback).pack(side='left',padx=3)
+    if (resource_root()/'models/expression-rgb.keras').exists():
+        ttk.Button(actions,text='Color model',command=lambda:engine.configure(model=str(resource_root()/'models/expression-rgb.keras'),layer='')).pack(side='left',padx=3)
     help_text='A  camera / screen     P  predictions     E  pose     I  help     F  FPS     Space  save faces     D  visualization     Esc  quit'
     help_label=label(root,help_text,9,muted);help_label.pack(fill='x',padx=26,pady=(12,0))
     status_label=tk.Label(root,textvariable=status,bg=bg,fg=mint,font=('Segoe UI',10),anchor='w',wraplength=1250,justify='left');status_label.pack(fill='x',padx=26,pady=(8,16))
@@ -301,6 +306,9 @@ def main():
                     refresh_filters()
                 elif kind=='model':
                     active_model=Path(value);model_text.set('Original capstone baseline' if active_model.suffix=='.h5' else 'Imported model: '+active_model.name)
+                elif kind=='model_info':
+                    model_text.set(value['name']+(' · RGB expression and Dream weights' if value['rgb'] else ' · grayscale expression features'))
+                    color_note.set('This model learns RGB features. Dream changes red, green, and blue using the same expression weights.' if value['rgb'] else 'This model sees grayscale. Dream changes brightness; the original image supplies the colors.')
                 elif kind=='device':device_text.set(value)
                 elif kind=='source':
                     current_source=value
@@ -329,7 +337,7 @@ def main():
                 if packet.get('reference') is not None:
                     draw(live_canvas,packet['reference'],'live');metrics_text.set(packet['reference_caption'])
                 elif packet['mode']=='Filter':
-                    empty(live_canvas,'NO FACE TO INSPECT','Move into view, or choose a clear face photo.');metrics_text.set('A detected face is required for the 48×48 model input.')
+                    empty(live_canvas,'NO FACE TO INSPECT','Move into view, or choose a clear face photo.');metrics_text.set('A detected face is required for the model input.')
                 last_visual=packet['image'];draw(vis_canvas,last_visual,'visual');visual_text.set(packet.get('caption') or ('Feature maps: brighter means stronger response within each tile.' if packet['mode']=='Activations' else f'{packet["engine"]} Dream · {packet["scope"]} · {packet["seconds"]:.2f}s / refresh. Artwork, not an emotion explanation.'))
         except queue.Empty:pass
         root.after(40,poll)

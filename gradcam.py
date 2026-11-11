@@ -47,9 +47,8 @@ class GradCAM:
         return scores+self.head.bias if self.head.use_bias else scores
 
     def explain(self,frame,target='Top prediction'):
-        from expression import preprocess,LABELS
-        gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-        x=self.keras.ops.convert_to_tensor(preprocess(gray))
+        from expression import preprocess_frame,LABELS
+        x=self.keras.ops.convert_to_tensor(preprocess_frame(frame,self.model.input_shape))
         index=None if target=='Top prediction' else LABELS.index(target)
         if self.keras.backend.backend()=='torch':
             import torch

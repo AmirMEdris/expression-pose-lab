@@ -20,3 +20,4 @@ docs/deepdream.gif
 *.filters.json
 *.filters.evidence.json
 *.filters.npz
+*.filters.assets/

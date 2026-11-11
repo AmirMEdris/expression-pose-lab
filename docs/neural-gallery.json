@@ -1,0 +1,9 @@
+{
+  "checkpoint_sha256": "e88d7d57577fb9545ce968e6dff48c35817001eae500d95c7d3c210bd79d1713",
+  "input": "procedural color fields; seed 2041; no dataset or camera images",
+  "strength": 0.012,
+  "updates": 160,
+  "keep_structure": false,
+  "rgb": true,
+  "feature_layer": "stage2_block2_b_conv"
+}
