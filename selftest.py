@@ -93,6 +93,27 @@ def run(root,output):
         assert dream.measurement['channel']==36
         np.testing.assert_allclose(predict_numpy(estimator.model,check),probabilities,atol=1e-6)
         result['SingleFilterDream']=dict(status='passed',opposing_channel_gradients=True,target_switch_reset=True,model_unchanged=True)
+        from filter_inspector import FilterInspector
+        from expression import preprocess
+        from filter_geometry import support_box
+        inspected=FilterInspector(visualizer).render(rgb,target,35)
+        expected=predict_numpy(visualizer.extractor(target),preprocess(cv2.cvtColor(rgb,cv2.COLOR_BGR2GRAY)))[0,:,:,35]
+        np.testing.assert_array_equal(inspected['grid'],expected)
+        assert inspected['image'].shape==(480,480,3)
+        if inspected['peak'] is not None:
+            geometry=FilterInspector(visualizer).geometry[target]
+            assert inspected['box']==support_box(geometry,*inspected['peak'])
+        cv2.imwrite(str(output/'filter-response.png'),np.hstack([inspected['reference'],inspected['image']]))
+        np.testing.assert_allclose(predict_numpy(estimator.model,check),probabilities,atol=1e-6)
+        result['FilterInspector']=dict(status='passed',classifier_input_match=True,model_unchanged=True)
+        structured=ModelDream(estimator.model)
+        guided,_=structured.render_developed(rgb,layer=target,channel=35,steps=12,long_edge=256,preserve_color=False,preserve_structure=True)
+        source_luma=structured.development['gray']
+        assert np.max(np.abs(guided[:,:,0].astype(np.float32)/255-source_luma))<=.145
+        assert np.abs(guided[:,:,0].astype(np.float32)/255-source_luma).mean()>0
+        guided_live=structured.render(rgb,target,channel=35,steps=3,long_edge=256,animate=False,preserve_color=False,preserve_structure=True)
+        assert np.max(np.abs(guided_live[:,:,0].astype(np.float32)/255-source_luma))<=.145
+        result['KeepStructure']=dict(status='passed',held_and_live_bounds=True)
         from pose import PoseEstimator
         pose=PoseEstimator(root/'models/pose_landmarker_lite.task')
         try:result['blank_pose_count']=len(pose.detect(np.zeros((256,256,3),np.uint8)))

@@ -46,14 +46,14 @@ class ModelDream:
         self.measurement=dict(layer=layer,channel=channel,before=before,after=after)
         return f'Mean response {before:.3g} → {after:.3g}'
 
-    def render_developed(self,frame,strength=.025,steps=6,long_edge=384,preserve_color=True,layer=None,channel=None):
+    def render_developed(self,frame,strength=.025,steps=6,long_edge=384,preserve_color=True,layer=None,channel=None,preserve_structure=False):
         """Develop a held frame progressively; each call performs a bounded chunk.
 
         A selected channel's spatial mean, or three late layers in mixed mode,
         guides long coarse-to-fine ascent. Classification weights stay fixed.
         """
         from backend import device_info
-        target=(layer,channel)
+        target=(layer,channel,preserve_structure)
         if (layer is None)!=(channel is None):raise ValueError('Choose both a layer and a filter')
         if channel is not None:self._validate_filter(layer,channel)
         if self.development is not None and self.development['target']!=target:self.reset()
@@ -109,10 +109,15 @@ class ModelDream:
                 gradient=tape.gradient(objective,tensor)
                 if gradient is None:raise ValueError('Feature graph has no input gradient')
                 updated=tf.clip_by_value(tensor+strength*gradient/(tf.math.reduce_std(gradient)+1e-8),0,1)
+            if preserve_structure:
+                from dream_structure import guided_step
+                updated=guided_step(self.keras.ops.convert_to_numpy(tensor)[0,:,:,0],self.keras.ops.convert_to_numpy(gradient)[0,:,:,0],np.roll(d['base'],(dy,dx),(0,1)),strength)[None,:,:,None]
             d['x']=np.roll(self.keras.ops.convert_to_numpy(updated)[0,:,:,0],(-dy,-dx),(0,1))
             d['done']+=1;d['total']+=1
             if d['done']>=limit:d['phase']+=1;d['done']=0
-        luminance=np.uint8(np.clip(cv2.resize(d['x'],(gray.shape[1],gray.shape[0])),0,1)*255)
+        displayed=cv2.resize(d['x'],(gray.shape[1],gray.shape[0]))
+        if preserve_structure:displayed=np.clip(displayed,gray-.14,gray+.14)
+        luminance=np.uint8(np.clip(displayed,0,1)*255)
         if preserve_color:
             chroma=d['chroma'].copy();chroma[:,:,0]=luminance
             image=cv2.cvtColor(chroma,cv2.COLOR_YCrCb2BGR)
@@ -134,7 +139,7 @@ class ModelDream:
             self.cache[layer]=clone
         return self.cache[layer]
 
-    def render(self,frame,layer,strength=.015,steps=3,long_edge=384,preserve_color=True,animate=True,channel=None):
+    def render(self,frame,layer,strength=.015,steps=3,long_edge=384,preserve_color=True,animate=True,channel=None,preserve_structure=False):
         from backend import device_info
         edge=min(long_edge,256) if device_info()['device']=='CPU' else long_edge
         width,height=preview_size(frame.shape,edge)
@@ -144,7 +149,7 @@ class ModelDream:
         # Reflection padding supports small face crops and very thin screen regions.
         padded=cv2.copyMakeBorder(gray,0,max(0,48-height),0,max(0,48-width),cv2.BORDER_REFLECT_101)
         if channel is not None:self._validate_filter(layer,channel)
-        key=(layer,channel,padded.shape)
+        key=(layer,channel,padded.shape,preserve_structure)
         x=padded.copy()
         if animate and self.previous is not None and self.last_key==key and np.abs(padded-self.last_input).mean()<.16:
             x=.4*x+.6*self.previous
@@ -174,8 +179,13 @@ class ModelDream:
                     gradient=tape.gradient(objective,tensor)
                     if gradient is None:raise ValueError('Selected feature graph has no input gradient')
                     updated=tf.clip_by_value(tensor+strength*gradient/(tf.math.reduce_std(gradient)+1e-8),0,1)
+                if preserve_structure:
+                    from dream_structure import guided_step
+                    base=np.roll(cv2.resize(padded,size),(dy,dx),(0,1))
+                    updated=guided_step(self.keras.ops.convert_to_numpy(tensor)[0,:,:,0],self.keras.ops.convert_to_numpy(gradient)[0,:,:,0],base,strength)[None,:,:,None]
                 x=np.roll(self.keras.ops.convert_to_numpy(updated)[0,:,:,0],(-dy,-dx),(0,1))
         x=cv2.resize(x,(padded.shape[1],padded.shape[0]),interpolation=cv2.INTER_LINEAR)
+        if preserve_structure:x=np.clip(x,padded-.14,padded+.14)
         self.previous=x;self.last_input=padded;self.last_key=key
         luminance=np.uint8(np.clip(x[:height,:width],0,1)*255)
         if not preserve_color:image=cv2.cvtColor(luminance,cv2.COLOR_GRAY2BGR)

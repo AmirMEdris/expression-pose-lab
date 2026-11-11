@@ -45,6 +45,7 @@ class Settings:
     dream_layer: str = ''
     dream_filter: int = 0
     dream_target_model: str = ''
+    preserve_structure: bool = True
 
 
 class Engine:
@@ -148,9 +149,10 @@ class Engine:
                     fps=1/max(elapsed,.001) if not fps else .9*fps+.1/max(elapsed,.001)
                     largest=max(faces,key=lambda f:f['box'][2]*f['box'][3],default=None)
                     visual_frame=frame
-                    if largest and (s.visual in ('Activations','GradCAM') or s.dream_scope=='Face only'):
+                    if largest and (s.visual in ('Activations','GradCAM','Filter') or s.dream_scope=='Face only'):
                         x,y,w,h=largest['box'];visual_frame=frame[y:y+h,x:x+w]
-                    target_ready=s.visual!='DeepDream' or s.dream_target!='One filter' or (bool(s.dream_layer) and (not s.dream_target_model or Path(s.dream_target_model)==Path(model_path)))
+                    needs_target=s.visual=='Filter' or (s.visual=='DeepDream' and s.dream_target=='One filter')
+                    target_ready=not needs_target or (bool(s.dream_layer) and (not s.dream_target_model or Path(s.dream_target_model)==Path(model_path)))
                     if s.visual!='Off' and target_ready and now-last_visual>.15:
                         latest(self.dream_input,(visualizer,visual_frame.copy(),s,self.generation,largest is not None));last_visual=now
                     if self.capture_face.is_set():
@@ -172,21 +174,31 @@ class Engine:
             if pose is not None:pose.close()
 
     def _dream(self):
-        rgb_dream=None;dream_model=None;previous_key=None;explainer=None;explained_model=None
+        rgb_dream=None;dream_model=None;previous_key=None;explainer=None;explained_model=None;inspector=None;inspected_model=None
         while not self.stop.is_set():
             try:visualizer,frame,s,generation,has_face=self.dream_input.get(timeout=.2)
             except queue.Empty:continue
             if self.snapshot().visual=='Off' or generation!=self.generation:continue
             try:
-                key=(generation,s.dream_scope,s.dream_engine,s.dream_depth,s.dream_resolution,s.layer,s.visual,s.dream_motion,s.dream_revision,s.dream_target,s.dream_layer,s.dream_filter)
+                key=(generation,s.dream_scope,s.dream_engine,s.dream_depth,s.dream_resolution,s.layer,s.visual,s.dream_motion,s.dream_revision,s.dream_target,s.dream_layer,s.dream_filter,s.preserve_structure)
                 if key!=previous_key:
                     visualizer.previous=None
                     if rgb_dream is not None:rgb_dream.reset()
                 previous_key=key
                 start=time.monotonic()
-                caption=None
+                caption=None;reference=None;reference_caption=None
                 layer=s.layer if s.layer in visualizer.layers else visualizer.layers[0]
-                if s.visual=='GradCAM':
+                if s.visual=='Filter':
+                    if not has_face:
+                        rendered=np.full((480,480,3),16,np.uint8)
+                        caption='No face detected. Filter response needs a face; no response map is shown.'
+                    else:
+                        if inspected_model is not visualizer.model:
+                            from filter_inspector import FilterInspector
+                            inspector=FilterInspector(visualizer);inspected_model=visualizer.model
+                        inspected=inspector.render(frame,s.dream_layer,s.dream_filter)
+                        rendered=inspected['image'];reference=inspected['reference'];caption=inspected['caption'];reference_caption=inspected['reference_caption']
+                elif s.visual=='GradCAM':
                     if not has_face:
                         rendered=frame;caption='No face detected. Explanation needs a detected face; no heatmap is shown.'
                     else:
@@ -203,18 +215,26 @@ class Engine:
                     channel=s.dream_filter if specific else None
                     if specific and target_layer not in visualizer.layers:raise ValueError('Choose a filter from the loaded model')
                     if s.dream_motion=='Develop':
-                        rendered,caption=rgb_dream.render_developed(frame,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful,layer=target_layer,channel=channel)
+                        rendered,caption=rgb_dream.render_developed(frame,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful,layer=target_layer,channel=channel,preserve_structure=s.preserve_structure)
+                        reference=rgb_dream.development['original']
+                        reference_caption='The frozen starting image for this Dream. Develop this frame captures a new starting image.'
                     else:
-                        rendered=rgb_dream.render(frame,target_layer if specific else layer,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful,channel=channel)
+                        rendered=rgb_dream.render(frame,target_layer if specific else layer,s.strength,s.steps,s.dream_resolution,preserve_color=s.colorful,channel=channel,preserve_structure=s.preserve_structure)
+                        reference=cv2.resize(frame,(rendered.shape[1],rendered.shape[0]),interpolation=cv2.INTER_AREA)
+                        reference_caption='The input used for this Dream refresh. Both views update together.'
                         caption='Following live input · lighter effect. Use Develop this frame for a longer transformation.'
                         if specific:
                             m=rgb_dream.measurement
                             caption=f'Following live input · {target_layer} · filter {channel} only. Mean response {m["before"]:.3g} → {m["after"]:.3g} at the displayed resolution.'
                     if specific:
-                        caption=f'Layer {visualizer.layers.index(target_layer)+1} · '+caption.replace(f'{target_layer} · filter {channel} only.',f'Filter {channel} only.')
+                        m=rgb_dream.measurement
+                        target_caption=f'Layer {visualizer.layers.index(target_layer)+1} · Filter {channel} only. Response {m["before"]:.3g} → {m["after"]:.3g}.'
+                    else:target_caption='Mixed features from your expression model.'
+                    progress=f'Held image · {rgb_dream.development["total"]}/362 updates.' if s.dream_motion=='Develop' else 'Following live input.'
+                    caption=f'{target_caption} {progress} '+('Structure kept.' if s.preserve_structure else 'Unrestricted changes.')+' Generated patterns, not feature locations.'
                 else:rendered=visualizer.render(frame,layer,s.visual,s.strength,s.steps,colorful=s.colorful)
                 if generation==self.generation:
-                    latest(self.visuals,dict(image=rendered,seconds=time.monotonic()-start,mode=s.visual,layer=layer,generation=generation,engine=s.dream_engine,scope=s.dream_scope,settings=s,caption=caption))
+                    latest(self.visuals,dict(image=rendered,reference=reference,reference_caption=reference_caption,seconds=time.monotonic()-start,mode=s.visual,layer=layer,generation=generation,engine=s.dream_engine,scope=s.dream_scope,settings=s,caption=caption))
                 self.stop.wait(max(0,.15-(time.monotonic()-start)))
             except Exception as error:
                 self.events.put(('error','Visualization: '+str(error)));self.configure(visual='Off')

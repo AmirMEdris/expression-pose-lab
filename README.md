@@ -10,7 +10,7 @@ Open **Expression Lab.exe** from the portable Windows folder. Keep `_internal` b
 
 1. Choose **Camera**, **Screen**, or **Open image**.
 2. Turn on **Expression predictions** or **Body pose** when you want those overlays.
-3. Choose **Live view**, **Dream**, **Feature maps**, or **Explain prediction** under Explore the model.
+3. Choose **Live view**, **Filter response**, **Dream**, **Feature maps**, or **Explain prediction** under Explore the model.
 4. **Save face crops** saves detected faces. **Save neural artwork** exports the visualization. Nothing is recorded automatically.
 
 The default view gives the input the available space. The neural panel appears only when you choose a visualization. Training is a separate developer tool, not an app button. **Import model** accepts a compatible `.keras` checkpoint and its matching `.json` metadata. **Model results** opens the evaluation report attached to the loaded model, verified against the checkpoint hash; it never asks you to browse for an arbitrary report.
@@ -20,6 +20,7 @@ The default view gives the input the available space. The neural panel appears o
 | View or control | Meaning |
 | --- | --- |
 | Live view | Your input with optional expression and pose overlays. |
+| Filter response | Inspect one filter on the original face. Left: exact 48×48 grayscale classifier input, enlarged, with the structural support box of a strongest unit. Right: a coarse response overlay. Yellow is higher and purple is lower within this image; colors are not confidence or semantic labels. No face means no map. |
 | Feature maps | Responses from 16 filters. Brighter means stronger response **within that tile**. Each tile has its own scale; these are not class probabilities or an explanation of a prediction. |
 | Dream | Multiscale gradient ascent through the loaded expression model’s convolutional features. The same weights operate on a larger image; classification still uses 48×48 faces. |
 | Dream target | **One filter** uses the exact Layer and Filter ID you choose. Numbering matches Explore filters: layers start at 1, filters at 0. **Mixed features** restores the broader effect. |
@@ -28,6 +29,7 @@ The default view gives the input the available space. The neural panel appears o
 | Dream area | Whole frame (default) or Face only. Face only uses the largest detected face, falling back to the whole frame when none is found. |
 | Expand artwork | Gives the artwork the full available viewport instead of showing it beside the live input. Screen input plus Whole frame processes your screen scene. |
 | Dream intensity | How far pixels change during each update. More is not more accurate. |
+| Keep image structure | On by default. Smooths the update direction and limits luminance changes to 0.14 around the source at each scale and in the final preview. This source-image constraint preserves context; it does not add learned features. Turn it off for the previous unrestricted effect. |
 | Pattern depth, in View settings | Applies to Mixed features + Follow live input: Fine detail / Shapes / Abstract select early / middle / late layers. Mixed features + Develop combines the three deepest layers. One filter always uses your exact selection. |
 | Dream processing, in View settings | Quick / Balanced / Detailed perform 1 / 3 / 6 pixel-update steps per refresh. More steps take more time; they **do not retrain the model**. |
 | Preserve input colors | Your model changes luminance; original chroma is preserved. The classifier still sees grayscale. |
@@ -36,9 +38,13 @@ The default view gives the input the available space. The neural panel appears o
 
 To follow a filter you found in the explorer, choose **Dream → One filter → Layer 4 → Filter 35**, then **Develop this frame**. This is the initial selection for the bundled recovered model. **Follow live input** applies the same selected target to changing camera/screen content. Changing the filter starts fresh; importing a different model resets to its first layer and filter because IDs do not carry the same meaning between models.
 
+For understanding what a filter responds to, start with **Filter response**, using the same layer/filter selectors. It performs a forward pass without changing input pixels. The yellow box marks the input region available to a strongest spatial unit, not a segmentation of an eye or mouth. The response overlay is interpolated from grid centers; broad receptive fields limit its precision. A uniform or all-zero response gets no invented highlight. Pair this view with the real dataset examples in **Explore filters** before assigning a semantic interpretation.
+
+Dream now displays its actual starting image beside its result. Held-frame Dream keeps both views tied to the frozen input; live mode refreshes the pair together. Current-camera expression bars are hidden in these inspection views so they cannot be mistaken for scores on a frozen Dream. Capture continues until you stop it.
+
 One filter maximizes that channel’s **mean response across spatial positions**. Other channels still participate in the forward network, but their responses are not added to the objective. The caption re-evaluates the actual displayed image and shows the selected channel’s before/after mean at that preview size. This is different from the explorer’s fixed-unit score. Jitter, resizing, color restoration, and pixel clipping mean the displayed score is not guaranteed to increase at every update; the caption reports the actual result.
 
-The stronger held-frame mode uses the same expression-model weights and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. Mixed features balances the mean responses of three late layers; One filter targets only the chosen channel. It fixes gradient normalization and clips pixels into the valid range; it does not reproduce the original notebook’s unchecked pixel conversion. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction.
+The held-frame mode uses the same expression-model weights and a 48/96/192/output-size pyramid. It spends most updates at coarse scales before refining details. Mixed features balances the mean responses of three late layers; One filter targets only the chosen channel. Keep image structure constrains this optimization; unrestricted ascent can fill the image with repeated textures and erase its original structure. Results are model-dependent: face-like fragments are not guaranteed, and this remains artwork rather than a literal explanation of a prediction. Higher display resolution does not recover detail or learned RGB features missing from the 48×48 grayscale training data.
 
 ### Explore individual filters
 
